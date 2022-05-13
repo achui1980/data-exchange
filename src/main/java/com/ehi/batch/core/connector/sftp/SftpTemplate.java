@@ -3,14 +3,17 @@ package com.ehi.batch.core.connector.sftp;
 import cn.hutool.extra.ssh.ChannelType;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.setting.dialect.Props;
+import com.ehi.batch.core.annotation.ExecuteTimer;
 import com.ehi.batch.core.exception.SSHException;
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,14 +32,16 @@ import static java.text.MessageFormat.format;
  * @date 05/10/2022 15:10
  */
 @Slf4j
+@Service
 public class SftpTemplate {
-
+    @Setter
     private String sftpPropertyFile;
 
     public SftpTemplate(String sftpPropertyFile) {
         this.sftpPropertyFile = sftpPropertyFile;
     }
 
+    public SftpTemplate () {}
     List<ChannelSftp.LsEntry> files = Lists.newArrayList();
 
     private ChannelSftp.LsEntrySelector filter(String fileNamePatternRegex) {
@@ -83,9 +88,8 @@ public class SftpTemplate {
                 .build();
     }
 
+    @ExecuteTimer
     public void execute(Consumer<SftpOperation> operation, List<SftpOperationListener> sftpListerners) {
-        Stopwatch g_sw = Stopwatch.createUnstarted();
-        g_sw.start();
         Sftp sftp = initSftp();
         log.info("Sftp info: {}", sftp.toString());
         Session session;
@@ -102,8 +106,6 @@ public class SftpTemplate {
                     .sftp(sftp)
                     .build();
             operation.accept(sftpOperation);
-            g_sw.start();
-            log.info("Sftp operation complete in {}", g_sw);
 
         } catch (SSHException e) {
             throw new SSHException(e.getMessage(), e);
@@ -112,7 +114,7 @@ public class SftpTemplate {
             JschUtil.close(session);
         }
     }
-
+    @ExecuteTimer
     public void download() {
         this.execute((sftpOperation) -> {
             try {
@@ -120,6 +122,9 @@ public class SftpTemplate {
                 channelSftp.cd(sftpOperation.getSftp().getFolder());
                 Sftp sftp = sftpOperation.getSftp();
                 channelSftp.ls(".", filter(sftpOperation.getSftp().getFileFilterRegex()));
+                if (CollectionUtils.isEmpty(files)) {
+                    log.debug("No files matched");
+                }
                 for (ChannelSftp.LsEntry file : files) {
                     doBefore(sftpOperation.getSftpListerners(), file);
                     File localFile = saveFileToLocal(channelSftp, file.getFilename(), sftp.getArchiveFolder());

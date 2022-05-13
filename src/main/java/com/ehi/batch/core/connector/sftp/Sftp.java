@@ -21,6 +21,7 @@ public class Sftp {
     private String privateKeyPassword;
     private String fileFilterRegex;
     private int timeout;
+    @ToString.Exclude
     private String folder;
     @ToString.Exclude
     private String archiveFolder;

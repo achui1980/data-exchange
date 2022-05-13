@@ -47,7 +47,8 @@ public class SpringBatchJobController {
     @GetMapping("/download")
     public String download() throws Exception {
         URL url = SpringBatchJobController.class.getResource("/demo/demoSftpProperties.properties");
-        SftpTemplate sftpTemplate = new SftpTemplate(url.getFile());
+        SftpTemplate sftpTemplate = context.getBean(SftpTemplate.class);
+        sftpTemplate.setSftpPropertyFile(url.getFile());
         sftpTemplate.download();
         return "download success";
     }

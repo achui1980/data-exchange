@@ -10,7 +10,7 @@ public class DefaultSftpConnector implements Connector {
     @Override
     public void download() {
 
-        SftpTemplate sftpTemplate = new SftpTemplate("");
-        sftpTemplate.download();
+        //SftpTemplate sftpTemplate = new SftpTemplate("");
+        //sftpTemplate.download();
     }
 }
