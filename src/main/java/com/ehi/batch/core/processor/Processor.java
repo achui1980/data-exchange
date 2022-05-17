@@ -1,6 +1,7 @@
 package com.ehi.batch.core.processor;
 
-import org.springframework.batch.core.Job;
+import com.ehi.batch.core.context.JobContext;
+import org.jeasy.batch.core.job.Job;
 
 /**
  * @author portz
@@ -8,5 +9,5 @@ import org.springframework.batch.core.Job;
  */
 public interface Processor {
 
-    Job processJob();
+    Job processJob(JobContext ctx);
 }

@@ -3,6 +3,7 @@ package com.ehi.batch.core.connector.sftp;
 import cn.hutool.extra.ssh.ChannelType;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.setting.dialect.Props;
+import com.ehi.batch.core.context.JobContext;
 import com.ehi.batch.core.annotation.ExecuteTimer;
 import com.ehi.batch.core.exception.SSHException;
 import com.google.common.collect.Lists;
@@ -13,6 +14,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -36,12 +39,16 @@ import static java.text.MessageFormat.format;
 public class SftpTemplate {
     @Setter
     private String sftpPropertyFile;
+    @Setter
+    private JobContext jobCtx;
 
     public SftpTemplate(String sftpPropertyFile) {
         this.sftpPropertyFile = sftpPropertyFile;
     }
 
-    public SftpTemplate () {}
+    public SftpTemplate() {
+    }
+
     List<ChannelSftp.LsEntry> files = Lists.newArrayList();
 
     private ChannelSftp.LsEntrySelector filter(String fileNamePatternRegex) {
@@ -88,7 +95,6 @@ public class SftpTemplate {
                 .build();
     }
 
-    @ExecuteTimer
     public void execute(Consumer<SftpOperation> operation, List<SftpOperationListener> sftpListerners) {
         Sftp sftp = initSftp();
         log.info("Sftp info: {}", sftp.toString());
@@ -114,7 +120,9 @@ public class SftpTemplate {
             JschUtil.close(session);
         }
     }
+
     @ExecuteTimer
+    @Retryable(value = {SSHException.class}, maxAttempts = 3, backoff = @Backoff(delay = 10))
     public void download() {
         this.execute((sftpOperation) -> {
             try {
@@ -126,9 +134,11 @@ public class SftpTemplate {
                     log.debug("No files matched");
                 }
                 for (ChannelSftp.LsEntry file : files) {
-                    doBefore(sftpOperation.getSftpListerners(), file);
+                    jobCtx.setSftpFile(file);
+                    doBefore(sftpOperation.getSftpListerners(), jobCtx);
                     File localFile = saveFileToLocal(channelSftp, file.getFilename(), sftp.getArchiveFolder());
-                    doAfter(sftpOperation.getSftpListerners(), localFile);
+                    jobCtx.setSourceData(localFile);
+                    doAfter(sftpOperation.getSftpListerners(), jobCtx);
                 }
             } catch (SftpException | IOException ex) {
                 throw new SSHException("error while handle SFTP operation", ex);
@@ -136,15 +146,15 @@ public class SftpTemplate {
         }, Lists.newArrayList(new DefaultSftpOperationListener()));
     }
 
-    private void doBefore(List<SftpOperationListener> listeners, ChannelSftp.LsEntry file) {
+    private void doBefore(List<SftpOperationListener> listeners, JobContext jobCtx) {
         for (SftpOperationListener sftpListener : listeners) {
-            sftpListener.beforeSftpOperation(file);
+            sftpListener.beforeSftpOperation(jobCtx);
         }
     }
 
-    private void doAfter(List<SftpOperationListener> listeners, File file) {
+    private void doAfter(List<SftpOperationListener> listeners, JobContext jobCtx) {
         for (SftpOperationListener sftpListener : listeners) {
-            sftpListener.afterSftpOperation(file);
+            sftpListener.afterSftpOperation(jobCtx);
         }
     }
 

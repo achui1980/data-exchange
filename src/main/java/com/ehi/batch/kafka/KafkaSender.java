@@ -38,7 +38,7 @@ public class KafkaSender {
         message.setId(System.currentTimeMillis());
         message.setMsg(msg);
         message.setSendTime(new Date());
-        log.info("+++++++++++++++++++++  message = {}", gson.toJson(message));
+        //log.info("+++++++++++++++++++++  message = {}", gson.toJson(message));
         ProducerRecord<String, String> record = new ProducerRecord("port.test", this.gson.toJson(message));
         if (CollectionUtils.isNotEmpty(headers)) {
             for (Map<String, String> header : headers) {

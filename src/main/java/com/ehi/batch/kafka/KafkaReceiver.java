@@ -27,8 +27,8 @@ public class KafkaReceiver {
         Optional<?> kafkaMessage = Optional.ofNullable(record.value());
         if (kafkaMessage.isPresent()) {
             Object message = kafkaMessage.get();
-            log.info("----------------- record =" + record);
-            log.info("------------------ message =" + message);
+            //log.info("----------------- record =" + record);
+            //log.info("------------------ message =" + message);
             //ETL Process
             redisTemplate.opsForSet().add("actionId", message.toString());
         }
