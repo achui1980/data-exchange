@@ -7,9 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
@@ -21,8 +19,6 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class AsyncConfig {
     private static final Integer EVENT_BUS_THREAD_POOL_SIZE = 20;
-    private static final Integer REST_CONTROLLER_THREAD_POOL_SIZE = 20;
-    private static final Integer REST_CONTROLLER_THREAD_POOL_QUEUE_SIZE = Integer.MAX_VALUE;
 
     @Bean
     public AsyncEventBus asyncEventBus() {
@@ -38,16 +34,5 @@ public class AsyncConfig {
             }
         });
         return asyncEventBus;
-    }
-
-    @Bean(name = "asyncExecutor")
-    public Executor asyncExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(REST_CONTROLLER_THREAD_POOL_SIZE);
-        executor.setMaxPoolSize(REST_CONTROLLER_THREAD_POOL_SIZE);
-        executor.setQueueCapacity(REST_CONTROLLER_THREAD_POOL_QUEUE_SIZE);
-        executor.setThreadNamePrefix("AsynchThread-");
-        executor.initialize();
-        return executor;
     }
 }

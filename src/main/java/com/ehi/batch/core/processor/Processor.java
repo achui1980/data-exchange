@@ -1,7 +1,7 @@
 package com.ehi.batch.core.processor;
 
 import com.ehi.batch.core.context.JobContext;
-import org.jeasy.batch.core.job.Job;
+import org.jeasy.batch.core.job.JobReport;
 
 /**
  * @author portz
@@ -9,5 +9,5 @@ import org.jeasy.batch.core.job.Job;
  */
 public interface Processor {
 
-    Job processJob(JobContext ctx);
+    JobReport processJob(JobContext ctx);
 }

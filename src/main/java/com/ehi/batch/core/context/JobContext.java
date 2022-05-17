@@ -19,6 +19,7 @@ public class JobContext extends Context {
     public JobContext convertFrom(FetchContext ctx) {
         super.setActionId(ctx.getActionId());
         super.setRequestToken(ctx.getRequestToken());
+        super.setActionProps(ctx.getActionProps());
         return this;
     }
 }

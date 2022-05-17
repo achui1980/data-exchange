@@ -1,7 +1,8 @@
 package com.ehi.batch.example;
 
+import com.ehi.batch.core.JobConfiguration;
 import com.ehi.batch.core.context.JobContext;
-import com.ehi.batch.core.processor.DefaultBatchProcessor;
+import com.ehi.batch.core.processor.AbstractBatchProcessor;
 import com.ehi.batch.kafka.KafkaSender;
 import org.jeasy.batch.core.processor.RecordProcessor;
 import org.jeasy.batch.core.reader.RecordReader;
@@ -12,6 +13,7 @@ import org.jeasy.batch.flatfile.FlatFileRecordReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -19,23 +21,20 @@ import java.nio.file.Paths;
  * @author portz
  * @date 05/09/2022 9:41
  */
-@Component("CSVBatchProcessor")
-public class CSVBatchProcessor extends DefaultBatchProcessor<String, String> {
+@Component(CSVBatchProcessor.ACTION_ID)
+public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
 
-    @Autowired
-    KafkaOutput writer;
+    public static final String  ACTION_ID = "CSVBatchProcessor";
 
     @Autowired
     KafkaSender sender;
 
-    @Override
-    public RecordReader<String> getReaderBean(JobContext ctx) {
+    private RecordReader<String> getReaderBean(JobContext ctx) {
         Path datasource = Paths.get(ctx.getSourceData().toURI());
         return new FlatFileRecordReader(datasource);
     }
 
-    @Override
-    public RecordWriter<String> getWriterBean(JobContext ctx) {
+    private RecordWriter<String> getWriterBean(JobContext ctx) {
 
         return new RecordWriter<String>() {
             @Override
@@ -47,8 +46,7 @@ public class CSVBatchProcessor extends DefaultBatchProcessor<String, String> {
         };
     }
 
-    @Override
-    public RecordProcessor<String, String> getItemProcessBean(JobContext ctx) {
+    private RecordProcessor<String, String> getItemProcessBean(JobContext ctx) {
         return new RecordProcessor<String, String>() {
             @Override
             public Record<String> processRecord(Record<String> record) throws Exception {
@@ -57,24 +55,12 @@ public class CSVBatchProcessor extends DefaultBatchProcessor<String, String> {
         };
     }
 
-
-//    @Override
-//    public List<JobExecutionListener> listeners(JobContext ctx) {
-//        return Lists.newArrayList(new SpringBatchJobCompletionListener());
-//    }
-//
-//    @Override
-//    public ItemReader<String> getReaderBean(JobContext ctx) {
-//        return new CSVReader(ctx).reader();
-//    }
-//
-//    @Override
-//    public ItemWriter<String> getWriterBean(JobContext ctx) {
-//        return writer;
-//    }
-//
-//    @Override
-//    public ItemProcessor getItemProcessBean(JobContext ctx) {
-//        return new SBProcessor();
-//    }
+    @Override
+    public JobConfiguration<String, String> config(JobContext ctx) {
+        return JobConfiguration.<String, String>builder()
+                .recordReader(getReaderBean(ctx))
+                .recordWriter(getWriterBean(ctx))
+                .recordProcessor(getItemProcessBean(ctx))
+                .build();
+    }
 }

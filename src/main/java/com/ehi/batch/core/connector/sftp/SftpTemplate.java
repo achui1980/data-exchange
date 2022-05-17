@@ -3,8 +3,8 @@ package com.ehi.batch.core.connector.sftp;
 import cn.hutool.extra.ssh.ChannelType;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.setting.dialect.Props;
-import com.ehi.batch.core.context.JobContext;
 import com.ehi.batch.core.annotation.ExecuteTimer;
+import com.ehi.batch.core.context.JobContext;
 import com.ehi.batch.core.exception.SSHException;
 import com.google.common.collect.Lists;
 import com.jcraft.jsch.ChannelSftp;
@@ -37,17 +37,9 @@ import static java.text.MessageFormat.format;
 @Slf4j
 @Service
 public class SftpTemplate {
-    @Setter
-    private String sftpPropertyFile;
+
     @Setter
     private JobContext jobCtx;
-
-    public SftpTemplate(String sftpPropertyFile) {
-        this.sftpPropertyFile = sftpPropertyFile;
-    }
-
-    public SftpTemplate() {
-    }
 
     List<ChannelSftp.LsEntry> files = Lists.newArrayList();
 
@@ -80,7 +72,7 @@ public class SftpTemplate {
     }
 
     private Sftp initSftp() {
-        Props props = new Props(this.sftpPropertyFile);
+        Props props = jobCtx.getActionProps();
         return Sftp.builder()
                 .host(props.getStr("sftp.host"))
                 .port(props.getInt("sftp.port", 22))

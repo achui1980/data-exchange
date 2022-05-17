@@ -1,6 +1,7 @@
 package com.ehi.batch;
 
 import cn.hutool.core.lang.UUID;
+import cn.hutool.setting.dialect.Props;
 import com.ehi.batch.core.context.FetchContext;
 import com.ehi.batch.kafka.KafkaSender;
 import com.ehi.batch.listener.FetchFileEventListener;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URL;
@@ -38,12 +40,14 @@ public class SpringBatchJobController {
         return "Batch job has been invoked";
     }
 
-    @GetMapping("/download")
-    public String download() throws Exception {
+    @GetMapping("/{actionId}/trigger")
+    public String download(@PathVariable("actionId") String actionId) throws Exception {
         String requestToken = UUID.randomUUID().toString();
-        URL url = SpringBatchJobController.class.getResource("/demo/demoSftpProperties.properties");
+        URL url = this.getClass().getResource("/demo/" + actionId + ".properties");
+        Props props = new Props(url.getFile());
         FetchContext fetchCtx = FetchContext.builder()
-                .actionId("actionId")
+                .actionId(actionId)
+                .actionProps(props)
                 .requestToken(requestToken)
                 .build();
         FetchFileEventListener listener = context.getBean(FetchFileEventListener.class);
