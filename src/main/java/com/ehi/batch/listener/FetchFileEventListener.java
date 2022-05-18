@@ -21,9 +21,6 @@ import java.net.URL;
 @Slf4j
 public class FetchFileEventListener {
     @Autowired
-    private AsyncEventBus asyncEventBus;
-
-    @Autowired
     private ApplicationContext appCtx;
 
     @Subscribe
@@ -31,7 +28,6 @@ public class FetchFileEventListener {
         log.info("========= begin to download ===========");
         JobContext jobCtx = JobContext.builder().build();
         jobCtx.convertFrom(fetchCtx);
-        URL url = this.getClass().getResource("/demo/" + fetchCtx.getActionId() + ".properties");
         SftpTemplate sftpTemplate = appCtx.getBean(SftpTemplate.class);
         sftpTemplate.setJobCtx(jobCtx);
         sftpTemplate.download();

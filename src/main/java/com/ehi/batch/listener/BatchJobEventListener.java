@@ -3,8 +3,6 @@ package com.ehi.batch.listener;
 import com.ehi.batch.core.context.JobContext;
 import com.ehi.batch.core.exception.BatchJobException;
 import com.ehi.batch.core.processor.Processor;
-import com.ehi.batch.example.CSVBatchProcessor;
-import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.Subscribe;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +16,6 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class BatchJobEventListener {
-    @Autowired
-    private AsyncEventBus asyncEventBus;
 
     @Autowired
     private ApplicationContext appCtx;
@@ -27,11 +23,9 @@ public class BatchJobEventListener {
     @Subscribe
     public void triggerBatchJob(JobContext jobCtx) throws BatchJobException {
         log.info("====== trigger job from EventBus begin  ======");
-        Processor processor = appCtx.getBean(CSVBatchProcessor.ACTION_ID, Processor.class);
-        try {
-            processor.processJob(jobCtx);
-        } finally {
-            log.info("====== trigger job EventBus end ======");
-        }
+        String processBean = jobCtx.getActionProps().getStr("batch.job.processor.name");
+        Processor processor = appCtx.getBean(processBean, Processor.class);
+        processor.processJob(jobCtx);
+        log.info("====== trigger job EventBus end ======");
     }
 }
