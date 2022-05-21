@@ -3,15 +3,12 @@ package com.ehi.batch.core.reader;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jeasy.batch.core.reader.AbstractFileRecordReader;
 import org.jeasy.batch.core.record.GenericRecord;
 import org.jeasy.batch.core.record.Header;
 import org.jeasy.batch.core.record.Record;
-import org.jeasy.batch.core.record.StringRecord;
 
 import java.io.FileReader;
 import java.nio.charset.Charset;
@@ -45,6 +42,9 @@ public class CSVItemReader extends AbstractFileRecordReader<String[]> {
 
     public CSVItemReader(final Path path, final Charset charset, int skipLines, Character separator, Character quoteChar) {
         super(path, charset);
+        this.skipLines = skipLines;
+        this.quoteChar = quoteChar;
+        this.separator = separator;
     }
 
     @Override

@@ -29,17 +29,17 @@ public class KafkaSender {
 
     //发送消息方法
     public void send(String msg) {
-        this.send("port.test", msg, null);
+        this.send("port.test", null, msg, null);
     }
 
     //发送消息方法
-    public void send(String topic, String msg, List<Map<String, String>> headers) {
+    public void send(String topic,String key, String msg, List<Map<String, String>> headers) {
         Message message = new Message();
         message.setId(System.currentTimeMillis());
         message.setMsg(msg);
         message.setSendTime(new Date());
         //log.info("+++++++++++++++++++++  message = {}", gson.toJson(message));
-        ProducerRecord<String, String> record = new ProducerRecord("port.test", this.gson.toJson(message));
+        ProducerRecord<String, String> record = new ProducerRecord("port.test", key, this.gson.toJson(message));
         if (CollectionUtils.isNotEmpty(headers)) {
             for (Map<String, String> header : headers) {
                 for (Map.Entry<String, String> head : header.entrySet()) {

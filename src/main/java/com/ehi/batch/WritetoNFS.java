@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author portz
@@ -21,14 +20,15 @@ public class WritetoNFS {
     RedisTemplate<String, String> template;
 
     public void writetoNFS() {
-        Set<String> set = template.opsForSet().members("actionId");
-        List<String> list = template.opsForSet().pop("actionId", 3);
+        int count = 0;
+        int totalCount = template.opsForSet().members("uhc-data-exchange").size();
+        List<String> list = template.opsForSet().pop("uhc-data-exchange", 3);
         while (!CollectionUtils.isEmpty(list)) {
-            for (String msg : set) {
-                log.info(msg);
-            }
-            list = template.opsForSet().pop("actionId", 3);
+            list = template.opsForSet().pop("uhc-data-exchange", 3);
+            count += list.size();
         }
+        System.out.println("total count:" + count);
+        System.out.println("total count2:" + totalCount);
 
     }
 }

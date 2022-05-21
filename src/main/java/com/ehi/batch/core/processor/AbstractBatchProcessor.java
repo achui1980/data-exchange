@@ -2,23 +2,27 @@ package com.ehi.batch.core.processor;
 
 import com.ehi.batch.core.JobConfiguration;
 import com.ehi.batch.core.context.JobContext;
+import com.ehi.batch.listener.BatchJobListener;
+import lombok.extern.slf4j.Slf4j;
 import org.jeasy.batch.core.job.Job;
 import org.jeasy.batch.core.job.JobBuilder;
 import org.jeasy.batch.core.job.JobExecutor;
 import org.jeasy.batch.core.job.JobReport;
-import org.jeasy.batch.core.processor.RecordProcessor;
-import org.jeasy.batch.core.reader.RecordReader;
-import org.jeasy.batch.core.writer.RecordWriter;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author portz
  * @date 05/16/2022 20:52
  */
+@Slf4j
 public abstract class AbstractBatchProcessor<I, O> implements Processor {
+    @Autowired
+    BatchJobListener batchJobListener;
+
     @Override
     public JobReport processJob(JobContext ctx) {
 
-        JobBuilder<I,O> jobBuilder = configJobBuilder(ctx);
+        JobBuilder<I, O> jobBuilder = configJobBuilder(ctx);
         Job job = jobBuilder.build();
         JobExecutor jobExecutor = new JobExecutor(1);
         JobReport report = jobExecutor.execute(job);
@@ -32,13 +36,16 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
 
     /**
      * configure listener, reader, wirtter etc.
+     *
      * @param ctx
      * @return
      */
     private JobBuilder<I, O> configJobBuilder(JobContext ctx) {
         String jobName = String.format("Batch-[%s]-[%s]", ctx.getActionId(), ctx.getRequestToken());
+        batchJobListener.setJobCtx(ctx);
         JobBuilder<I, O> jobBuilder = new JobBuilder<I, O>()
                 .named(jobName)
+                .jobListener(batchJobListener)
                 .batchSize(1);
         JobConfiguration<I, O> jobConfiguration = this.config(ctx);
         if (jobConfiguration.getRecordFilter() != null) {
@@ -48,6 +55,7 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
             jobBuilder.batchSize(jobConfiguration.getBatchSize());
         }
         if (jobConfiguration.getBatchListener() != null) {
+            log.warn("Please make sure you implement the logic in {} !!!", BatchJobListener.class.getName());
             jobBuilder.batchListener(jobConfiguration.getBatchListener());
         }
         if (jobConfiguration.getJobListener() != null) {

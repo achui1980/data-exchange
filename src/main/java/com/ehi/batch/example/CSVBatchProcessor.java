@@ -4,7 +4,10 @@ import com.ehi.batch.core.JobConfiguration;
 import com.ehi.batch.core.context.JobContext;
 import com.ehi.batch.core.processor.AbstractBatchProcessor;
 import com.ehi.batch.core.reader.CSVItemReader;
+import com.ehi.batch.domain.MessageHeader;
 import com.ehi.batch.kafka.KafkaSender;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.jeasy.batch.core.processor.RecordProcessor;
 import org.jeasy.batch.core.reader.RecordReader;
 import org.jeasy.batch.core.record.Batch;
@@ -13,8 +16,11 @@ import org.jeasy.batch.core.writer.RecordWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author portz
@@ -30,7 +36,10 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String[], String[]
 
     private RecordReader<String[]> getReaderBean(JobContext ctx) {
         Path datasource = Paths.get(ctx.getSourceData().toURI());
-        return new CSVItemReader(datasource);
+        Character separator = ctx.getActionProps().getChar("batch.csv.separator", '\t');
+        Character quoteChar = ctx.getActionProps().getChar("batch.csv.quoteChar", '\'');
+        int skipLines = ctx.getActionProps().getInt("batch.cvs.skip.lines", 0);
+        return new CSVItemReader(datasource, Charset.defaultCharset(), skipLines, separator, quoteChar);
     }
 
     private RecordWriter<String[]> getWriterBean(JobContext ctx) {
@@ -38,8 +47,18 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String[], String[]
         return new RecordWriter<String[]>() {
             @Override
             public void writeRecords(Batch<String[]> batch) throws Exception {
+                List<Map<String, String>> headers = Lists.newArrayList();
                 for (Record<String[]> record : batch) {
-                    sender.send("port.test", record.getPayload().toString(), null);
+                    Map<String, String> header = Maps.newHashMap();
+                    MessageHeader messageHeader = MessageHeader.builder()
+                            .actionId(ctx.getActionId())
+                            .rowNumber(record.getHeader().getNumber())
+                            .mapperClass(ctx.getActionProps().getStr("batch.record.mapper.class"))
+                            .requestToken(ctx.getRequestToken())
+                            .build();
+                    header.put("X-Batch-Meta-Json", messageHeader.toString());
+                    headers.add(header);
+                    sender.send("port.test", ctx.getActionId(), record.getPayload().toString(), headers);
                 }
             }
         };

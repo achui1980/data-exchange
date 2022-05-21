@@ -31,7 +31,7 @@ public class KafkaOutput implements RecordWriter<String> {
     public void writeRecords(Batch<String> batch) throws Exception {
         for (Record<String> msg : batch) {
             //log.info("Writing the data to Kafka \n" + msg);
-            sender.send(topic, msg.getPayload(), null);
+            sender.send(topic, null, msg.getPayload(), null);
         }
     }
 }
