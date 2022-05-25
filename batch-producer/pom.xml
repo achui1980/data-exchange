@@ -20,6 +20,11 @@
         <easybatch.version>7.0.2</easybatch.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.ehi</groupId>
+            <artifactId>batch-model</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/com.jcraft/jsch -->
         <dependency>
             <groupId>com.jcraft</groupId>
