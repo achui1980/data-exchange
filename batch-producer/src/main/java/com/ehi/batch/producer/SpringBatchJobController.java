@@ -51,6 +51,7 @@ public class SpringBatchJobController {
         FetchFileEventListener listener = context.getBean(FetchFileEventListener.class);
         asyncEventBus.register(listener);
         asyncEventBus.post(fetchCtx);
+        asyncEventBus.unregister(listener);
         return "download success";
     }
 }

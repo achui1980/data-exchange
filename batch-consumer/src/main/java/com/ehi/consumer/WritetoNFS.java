@@ -20,15 +20,10 @@ public class WritetoNFS {
     RedisTemplate<String, String> template;
 
     public void writetoNFS() {
-        int count = 0;
-        int totalCount = template.opsForSet().members("uhc-data-exchange").size();
+        //int totalCount = template.opsForSet().members("uhc-data-exchange").size();
         List<String> list = template.opsForSet().pop("uhc-data-exchange", 3);
         while (!CollectionUtils.isEmpty(list)) {
             list = template.opsForSet().pop("uhc-data-exchange", 3);
-            count += list.size();
         }
-        System.out.println("total count:" + count);
-        System.out.println("total count2:" + totalCount);
-
     }
 }

@@ -1,13 +1,17 @@
 package com.ehi.batch.producer.example;
 
 import com.ehi.batch.model.MessageHeader;
+import com.ehi.batch.model.UhcDataObject;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.processor.AbstractBatchProcessor;
 import com.ehi.batch.producer.core.reader.CSVItemReader;
 import com.ehi.batch.producer.kafka.KafkaSender;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jeasy.batch.core.processor.RecordProcessor;
 import org.jeasy.batch.core.reader.RecordReader;
 import org.jeasy.batch.core.record.Batch;
@@ -27,14 +31,16 @@ import java.util.Map;
  * @date 05/09/2022 9:41
  */
 @Component(CSVBatchProcessor.ACTION_ID)
-public class CSVBatchProcessor extends AbstractBatchProcessor<String[], String[]> {
+public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
 
     public static final String ACTION_ID = "CSVBatchProcessor";
+
+    Gson gson = new GsonBuilder().create();
 
     @Autowired
     KafkaSender sender;
 
-    private RecordReader<String[]> getReaderBean(JobContext ctx) {
+    private RecordReader<String> getReaderBean(JobContext ctx) {
         Path datasource = Paths.get(ctx.getSourceData().toURI());
         Character separator = ctx.getActionProps().getChar("batch.csv.separator", '\t');
         Character quoteChar = ctx.getActionProps().getChar("batch.csv.quoteChar", '\'');
@@ -42,13 +48,13 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String[], String[]
         return new CSVItemReader(datasource, Charset.defaultCharset(), skipLines, separator, quoteChar);
     }
 
-    private RecordWriter<String[]> getWriterBean(JobContext ctx) {
+    private RecordWriter<String> getWriterBean(JobContext ctx) {
 
-        return new RecordWriter<String[]>() {
+        return new RecordWriter<String>() {
             @Override
-            public void writeRecords(Batch<String[]> batch) throws Exception {
+            public void writeRecords(Batch<String> batch) throws Exception {
                 List<Map<String, String>> headers = Lists.newArrayList();
-                for (Record<String[]> record : batch) {
+                for (Record<String> record : batch) {
                     Map<String, String> header = Maps.newHashMap();
                     MessageHeader messageHeader = MessageHeader.builder()
                             .actionId(ctx.getActionId())
@@ -56,9 +62,10 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String[], String[]
                             .mapperClass(ctx.getActionProps().getStr("batch.record.mapper.class"))
                             .requestToken(ctx.getRequestToken())
                             .build();
+                    String json = gson.toJson(record.getPayload());
                     header.put("X-Batch-Meta-Json", messageHeader.toString());
                     headers.add(header);
-                    sender.send("port.test", ctx.getActionId(), record.getPayload().toString(), headers);
+                    sender.send("port.test", ctx.getActionId(), json, headers);
                 }
             }
         };
@@ -74,10 +81,11 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String[], String[]
     }
 
     @Override
-    public JobConfiguration<String[], String[]> config(JobContext ctx) {
-        return JobConfiguration.<String[], String[]>builder()
+    public JobConfiguration<String, String> config(JobContext ctx) {
+        return JobConfiguration.<String, String>builder()
                 .recordReader(getReaderBean(ctx))
                 .recordWriter(getWriterBean(ctx))
+                .recordMapper(new OpenCsvRecordMapper(UhcDataObject.class, new String[]{"recordType", "medicareNumberOnApplication", "confirmationNumber", "policyId", "planType", "firstName", "lastName", "middleName", "applicationStatus", "lastModifiedDate", "terminationReasonName", "insuredPlanStartDate", "insuredPlanTerminationDate", "planDescription", "recentEnrollmentStatus", "contractNumber", "pbp"}))
                 .recordProcessor(getItemProcessBean(ctx))
                 .build();
     }

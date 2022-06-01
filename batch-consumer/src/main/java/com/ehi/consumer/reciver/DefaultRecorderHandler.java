@@ -2,6 +2,11 @@ package com.ehi.consumer.reciver;
 
 
 import com.ehi.consumer.WritetoNFS;
+import com.ehi.batch.model.UhcDataObject;
+import com.ehi.consumer.reader.CommonDataReader;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -20,6 +25,8 @@ public class DefaultRecorderHandler extends AbstractRecordHandler {
     @Autowired
     WritetoNFS writetoNFS;
 
+    private Gson gson = new GsonBuilder().create();
+
     @Override
     public void whenJobComplete(ConsumerJobContext ctx) {
         writetoNFS.writetoNFS();
@@ -28,6 +35,13 @@ public class DefaultRecorderHandler extends AbstractRecordHandler {
     @Override
     public void handleEachRecord(ConsumerJobContext ctx) {
         String actionId = ctx.getMessageMeta().getActionId();
-        redisTemplate.opsForSet().add(actionId, ctx.getMessage().toString());
+        //CommonDataReader commonDataReader = new CommonDataReader(UhcDataObject.class, new String[]{"recordType", "medicareNumberOnApplication", "confirmationNumber", "policyId", "planType", "firstName", "lastName", "middleName", "applicationStatus", "lastModifiedDate", "terminationReasonName", "insuredPlanStartDate", "insuredPlanTerminationDate", "planDescription", "recentEnrollmentStatus", "contractNumber", "pbp"});
+        try {
+            UhcDataObject message = gson.fromJson(ctx.getMessage().toString(), UhcDataObject.class);
+            //UhcDataObject message = objectMapper.readValue(ctx.getMessage().toString(), UhcDataObject.class);
+            redisTemplate.opsForSet().add(actionId, ctx.getMessage().toString());
+        } catch (Exception e) {
+            log.error("covert to object error", e);
+        }
     }
 }

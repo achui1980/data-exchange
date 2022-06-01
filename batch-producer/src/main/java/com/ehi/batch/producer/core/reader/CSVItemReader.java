@@ -1,14 +1,15 @@
 package com.ehi.batch.producer.core.reader;
 
+import com.google.common.base.Joiner;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jeasy.batch.core.reader.AbstractFileRecordReader;
-import org.jeasy.batch.core.record.GenericRecord;
 import org.jeasy.batch.core.record.Header;
 import org.jeasy.batch.core.record.Record;
+import org.jeasy.batch.core.record.StringRecord;
 
 import java.io.FileReader;
 import java.nio.charset.Charset;
@@ -21,7 +22,7 @@ import java.util.Iterator;
  * @date 05/17/2022 13:53
  */
 @Slf4j
-public class CSVItemReader extends AbstractFileRecordReader<String[]> {
+public class CSVItemReader extends AbstractFileRecordReader<String> {
 
     private Iterator<String[]> iterator;
     private long currentRecordNumber;
@@ -61,10 +62,12 @@ public class CSVItemReader extends AbstractFileRecordReader<String[]> {
     }
 
     @Override
-    public Record<String[]> readRecord() throws Exception {
+    public Record<String> readRecord() throws Exception {
         Header header = new Header(++currentRecordNumber, getDataSourceName(), LocalDateTime.now());
         if (iterator.hasNext()) {
-            return new GenericRecord<>(header, iterator.next());
+            String[] record = iterator.next();
+            //Convert to string separate by 'tab'
+            return new StringRecord(header, Joiner.on("\t").join(record));
         }
         return null;
     }

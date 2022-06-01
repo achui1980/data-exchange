@@ -24,5 +24,6 @@ public class DefaultSftpOperationListener implements SftpOperationListener {
         BatchJobEventListener listener = ApplicationContextProvider.getApplicationContext().getBean(BatchJobEventListener.class);
         asyncEventBus.register(listener);
         asyncEventBus.post(ctx);
+        asyncEventBus.unregister(listener);
     }
 }

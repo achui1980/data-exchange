@@ -134,6 +134,8 @@ public class SftpTemplate {
                 }
             } catch (SftpException | IOException ex) {
                 throw new SSHException("error while handle SFTP operation", ex);
+            } finally {
+                files.clear();
             }
         }, Lists.newArrayList(new DefaultSftpOperationListener()));
     }
