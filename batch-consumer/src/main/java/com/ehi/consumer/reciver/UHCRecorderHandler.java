@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
 /**
  * @author portz
  * @date 05/21/2022 11:03
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class UHCRecorderHandler extends AbstractRecordHandler {
+    public static final String ACTION_ID = "uhc-data-exchange";
     @Autowired
     RedisTemplate<String, String> redisTemplate;
 
@@ -25,8 +28,14 @@ public class UHCRecorderHandler extends AbstractRecordHandler {
 
     private Gson gson = new GsonBuilder().create();
 
+    @PostConstruct
+    public void initProps() {
+
+    }
+
     @Override
     public void whenJobComplete(ConsumerJobContext ctx) {
+        log.info("UHC write NFS");
         writetoNFS.writetoNFS();
     }
 

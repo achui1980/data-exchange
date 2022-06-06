@@ -7,6 +7,7 @@ package com.ehi.batch;
 public class PropertyConstant {
 
     public final static String BATCH_JOB_PROCESSOR_NAME = "batch.job.processor.name";
+    public final static String BATCH_JOB_HANDLER_NAME = "batch.job.handler.name";
     public final static String BATCH_RECORD_OBJECT_MODEL = "batch.record.object.model";
     public final static String BATCH_RECORD_OBJECT_COLUMNS = "batch.record.object.columns";
 

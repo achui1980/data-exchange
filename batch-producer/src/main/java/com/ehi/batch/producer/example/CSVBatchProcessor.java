@@ -77,7 +77,7 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
                     .recordReader(getReaderBean(ctx))
                     .recordWriter(getWriterBean(ctx))
                     .recordMapper(new OpenCsvRecordMapper(mapperClzz, columns))
-                    .recordProcessor(getItemProcessBean(ctx))
+                    //.recordProcessor(getItemProcessBean(ctx))
                     .build();
         } catch (ClassNotFoundException e) {
             throw new BatchJobException("can not find class " + mapperClass, e);

@@ -1,5 +1,6 @@
 package com.ehi.batch.model;
 
+import com.opencsv.bean.CsvBindByPosition;
 import lombok.Data;
 
 /**
@@ -8,8 +9,11 @@ import lombok.Data;
  */
 @Data
 public class UhcDataObject {
+    @CsvBindByPosition(position = 0)
     private String recordType;
+    @CsvBindByPosition(position = 1)
     private String medicareNumberOnApplication;
+    @CsvBindByPosition(position = 2)
     private String confirmationNumber;
     private String policyId;
     private String planType;

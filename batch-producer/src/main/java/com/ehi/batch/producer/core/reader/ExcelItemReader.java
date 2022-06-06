@@ -12,7 +12,6 @@ import org.jeasy.batch.core.record.Header;
 import org.jeasy.batch.core.record.Record;
 import org.jeasy.batch.core.record.StringRecord;
 
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Iterator;

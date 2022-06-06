@@ -45,7 +45,7 @@ public class CSVItemReader extends AbstractFileRecordReader<String> {
         this.separator = separator;
     }
 
-    public CSVItemReader(final Path path, final Charset charset) {
+    private CSVItemReader(final Path path, final Charset charset) {
         super(path, charset);
     }
 

@@ -17,6 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class GTLRecorderHandler extends AbstractRecordHandler {
+
+    public static final String ACTION_ID = "gtl-data-exchange";
     @Autowired
     RedisTemplate<String, String> redisTemplate;
 
@@ -27,6 +29,7 @@ public class GTLRecorderHandler extends AbstractRecordHandler {
 
     @Override
     public void whenJobComplete(ConsumerJobContext ctx) {
+        log.info("GTL write NFS");
         writetoNFS.writetoNFS();
     }
 

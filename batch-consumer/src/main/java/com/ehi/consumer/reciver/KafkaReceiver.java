@@ -1,15 +1,22 @@
 package com.ehi.consumer.reciver;
 
+import cn.hutool.setting.dialect.Props;
+import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.model.MessageHeader;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.net.URL;
 import java.util.Optional;
 
 /**
@@ -21,13 +28,16 @@ import java.util.Optional;
 public class KafkaReceiver {
 
     @Autowired
-    UHCRecorderHandler processor;
+    ApplicationContext appCtx;
 
-    ObjectMapper mapper;
+    Gson gson;
+    private Cache<String, Props> cache;
 
     @PostConstruct
     public void register() {
-        mapper = new ObjectMapper();
+        gson = new GsonBuilder().create();
+        cache = CacheBuilder.newBuilder().build();
+
     }
 
     @KafkaListener(topics = {"port.test"})
@@ -36,12 +46,17 @@ public class KafkaReceiver {
         if (kafkaMessage.isPresent()) {
             Object message = kafkaMessage.get();
             try {
-                MessageHeader messageMeta = mapper.readValue(metaJson, MessageHeader.class);
+                MessageHeader messageMeta = gson.fromJson(metaJson, MessageHeader.class);
+                URL url = this.getClass().getResource("/demo/" + messageMeta.getActionId() + ".properties");
+                Props actionProps = cache.get(messageMeta.getActionId(), () -> new Props(url.getFile()));
                 ConsumerJobContext ctx = ConsumerJobContext.builder()
                         .messageMeta(messageMeta)
                         .message(message)
+                        .propertyFile(actionProps)
                         .build();
-                processor.processRecord(ctx);
+                String bean = actionProps.getStr("batch.job.handler.name");
+                RecordHandler handler = appCtx.getBean(bean, RecordHandler.class);
+                handler.processRecord(ctx);
 
             } catch (Exception e) {
                 log.error("error while covert to class", e);
