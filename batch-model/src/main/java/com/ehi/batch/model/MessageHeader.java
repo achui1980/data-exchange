@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class MessageHeader {
     private String actionId;
     private Long rowNumber;
-    private String mapperClass;
+    private String objectModel;
     private String requestToken;
     private boolean jobComplete;
     private boolean jobStart;

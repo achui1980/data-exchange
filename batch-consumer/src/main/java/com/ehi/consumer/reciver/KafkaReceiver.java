@@ -21,7 +21,7 @@ import java.util.Optional;
 public class KafkaReceiver {
 
     @Autowired
-    DefaultRecorderHandler processor;
+    UHCRecorderHandler processor;
 
     ObjectMapper mapper;
 

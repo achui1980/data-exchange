@@ -34,7 +34,7 @@ public class BatchJobListener implements JobListener {
         List<Map<String, String>> headers = Lists.newArrayList();
         MessageHeader messageHeader = MessageHeader.builder()
                 .actionId(jobCtx.getActionId())
-                .mapperClass(jobCtx.getActionProps().getStr("batch.record.mapper.class"))
+                .objectModel(jobCtx.getActionProps().getStr("batch.record.mapper.class"))
                 .requestToken(jobCtx.getRequestToken())
                 .jobComplete(false)
                 .jobStart(true)
@@ -50,7 +50,7 @@ public class BatchJobListener implements JobListener {
         List<Map<String, String>> headers = Lists.newArrayList();
         MessageHeader messageHeader = MessageHeader.builder()
                 .actionId(jobCtx.getActionId())
-                .mapperClass(jobCtx.getActionProps().getStr("batch.record.mapper.class"))
+                .objectModel(jobCtx.getActionProps().getStr("batch.record.mapper.class"))
                 .requestToken(jobCtx.getRequestToken())
                 .jobComplete(true)
                 .jobStart(false)

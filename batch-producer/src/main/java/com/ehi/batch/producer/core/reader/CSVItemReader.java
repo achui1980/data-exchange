@@ -1,5 +1,7 @@
 package com.ehi.batch.producer.core.reader;
 
+import cn.hutool.setting.dialect.Props;
+import com.ehi.batch.PropertyConstant;
 import com.google.common.base.Joiner;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
@@ -29,24 +31,24 @@ public class CSVItemReader extends AbstractFileRecordReader<String> {
     @Setter
     private int skipLines = 0;
     @Setter
-    private Character separator = '\t';
+    private Character separator;
     @Setter
-    private Character quoteChar = '\'';
+    private Character quoteChar;
 
-    public CSVItemReader(final Path path) {
+    public CSVItemReader(final Path path, Props config) {
         this(path, Charset.defaultCharset());
+        Character separator = config.getChar(PropertyConstant.BATCH_CSV_SEPARATOR, '\t');
+        Character quoteChar = config.getChar(PropertyConstant.BATCH_CSV_QUOTECHAR, '\'');
+        int skipLines = config.getInt(PropertyConstant.BATCH_CSV_SKIP_LINES, 0);
+        this.skipLines = skipLines;
+        this.quoteChar = quoteChar;
+        this.separator = separator;
     }
 
     public CSVItemReader(final Path path, final Charset charset) {
         super(path, charset);
     }
 
-    public CSVItemReader(final Path path, final Charset charset, int skipLines, Character separator, Character quoteChar) {
-        super(path, charset);
-        this.skipLines = skipLines;
-        this.quoteChar = quoteChar;
-        this.separator = separator;
-    }
 
     @Override
     public void open() throws Exception {

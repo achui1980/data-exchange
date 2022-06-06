@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.listener;
 
+import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.processor.Processor;
@@ -23,7 +24,7 @@ public class BatchJobEventListener {
     @Subscribe
     public void triggerBatchJob(JobContext jobCtx) throws BatchJobException {
         log.info("====== trigger job from EventBus begin  ======");
-        String processBean = jobCtx.getActionProps().getStr("batch.job.processor.name");
+        String processBean = jobCtx.getActionProps().getStr(PropertyConstant.BATCH_JOB_PROCESSOR_NAME);
         Processor processor = appCtx.getBean(processBean, Processor.class);
         processor.processJob(jobCtx);
         log.info("====== trigger job EventBus end ======");

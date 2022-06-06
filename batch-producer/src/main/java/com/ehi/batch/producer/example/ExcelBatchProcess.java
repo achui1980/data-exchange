@@ -6,12 +6,10 @@ import com.ehi.batch.model.MessageHeader;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.processor.AbstractBatchProcessor;
-import com.ehi.batch.producer.core.reader.CSVItemReader;
+import com.ehi.batch.producer.core.reader.ExcelItemReader;
 import com.ehi.batch.producer.kafka.KafkaSender;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.jeasy.batch.core.processor.RecordProcessor;
 import org.jeasy.batch.core.reader.RecordReader;
 import org.jeasy.batch.core.record.Record;
@@ -26,21 +24,18 @@ import java.util.Map;
 
 /**
  * @author portz
- * @date 05/09/2022 9:41
+ * @date 06/02/2022 15:26
  */
-@Component(CSVBatchProcessor.ACTION_ID)
-public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
-
-    public static final String ACTION_ID = "CSVBatchProcessor";
-
-    Gson gson = new GsonBuilder().create();
-
+@Component(ExcelBatchProcess.ACTION_ID)
+public class ExcelBatchProcess extends AbstractBatchProcessor<String, String> {
+    public static final String ACTION_ID = "ExcelBatchProcessor";
     @Autowired
     KafkaSender sender;
 
     private RecordReader<String> getReaderBean(JobContext ctx) {
         Path datasource = Paths.get(ctx.getSourceData().toURI());
-        return new CSVItemReader(datasource,ctx.getActionProps());
+        ExcelItemReader excelItemReader = new ExcelItemReader(datasource, ctx.getActionProps());
+        return excelItemReader;
     }
 
     private RecordWriter<String> getWriterBean(JobContext ctx) {
@@ -55,10 +50,9 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
                         .objectModel(ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
                         .requestToken(ctx.getRequestToken())
                         .build();
-                String json = gson.toJson(record.getPayload());
                 header.put("X-Batch-Meta-Json", messageHeader.toString());
                 headers.add(header);
-                sender.send("port.test", ctx.getActionId(), json, headers);
+                sender.send("port.test", ctx.getActionId(), record.getPayload(), headers);
             }
         };
     }
@@ -69,18 +63,10 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
 
     @Override
     public JobConfiguration<String, String> config(JobContext ctx) throws BatchJobException {
-        String mapperClass = ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL);
-        String[] columns = ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_COLUMNS).split(",");
-        try {
-            Class mapperClzz = Class.forName(mapperClass);
-            return JobConfiguration.<String, String>builder()
-                    .recordReader(getReaderBean(ctx))
-                    .recordWriter(getWriterBean(ctx))
-                    .recordMapper(new OpenCsvRecordMapper(mapperClzz, columns))
-                    .recordProcessor(getItemProcessBean(ctx))
-                    .build();
-        } catch (ClassNotFoundException e) {
-            throw new BatchJobException("can not find class " + mapperClass, e);
-        }
+        return JobConfiguration.<String, String>builder()
+                .recordReader(getReaderBean(ctx))
+                .recordWriter(getWriterBean(ctx))
+                .recordProcessor(getItemProcessBean(ctx))
+                .build();
     }
 }

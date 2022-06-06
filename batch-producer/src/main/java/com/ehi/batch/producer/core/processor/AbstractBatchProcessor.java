@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.core.processor;
 
+import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.listener.BatchJobListener;
@@ -20,7 +21,7 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
     BatchJobListener batchJobListener;
 
     @Override
-    public JobReport processJob(JobContext ctx) {
+    public JobReport processJob(JobContext ctx) throws BatchJobException {
 
         JobBuilder<I, O> jobBuilder = configJobBuilder(ctx);
         Job job = jobBuilder.build();
@@ -32,7 +33,7 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
         return report;
     }
 
-    abstract public JobConfiguration<I, O> config(JobContext ctx);
+    abstract public JobConfiguration<I, O> config(JobContext ctx) throws BatchJobException;
 
     /**
      * configure listener, reader, wirtter etc.

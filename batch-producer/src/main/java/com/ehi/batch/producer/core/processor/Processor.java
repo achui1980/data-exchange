@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.core.processor;
 
+import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.context.JobContext;
 import org.jeasy.batch.core.job.JobReport;
 
@@ -9,5 +10,5 @@ import org.jeasy.batch.core.job.JobReport;
  */
 public interface Processor {
 
-    JobReport processJob(JobContext ctx);
+    JobReport processJob(JobContext ctx) throws BatchJobException;
 }
