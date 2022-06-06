@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.listener;
 
+import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.model.MessageHeader;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.kafka.KafkaSender;
@@ -11,6 +12,7 @@ import org.jeasy.batch.core.job.JobParameters;
 import org.jeasy.batch.core.job.JobReport;
 import org.jeasy.batch.core.listener.JobListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -29,12 +31,15 @@ public class BatchJobListener implements JobListener {
     @Setter
     JobContext jobCtx;
 
+    @Value("${spring.kafka.topic}")
+    private String topic;
+
     @Override
     public void beforeJob(JobParameters jobParameters) {
         List<Map<String, String>> headers = Lists.newArrayList();
         MessageHeader messageHeader = MessageHeader.builder()
                 .actionId(jobCtx.getActionId())
-                .objectModel(jobCtx.getActionProps().getStr("batch.record.mapper.class"))
+                .objectModel(jobCtx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
                 .requestToken(jobCtx.getRequestToken())
                 .jobComplete(false)
                 .jobStart(true)
@@ -42,7 +47,7 @@ public class BatchJobListener implements JobListener {
         Map<String, String> header = Maps.newHashMap();
         header.put("X-Batch-Meta-Json", messageHeader.toString());
         headers.add(header);
-        sender.send("port.test", jobCtx.getActionId(), "Batch Start", headers);
+        sender.send(topic, jobCtx.getActionId(), "Batch Start", headers);
     }
 
     @Override
@@ -50,7 +55,7 @@ public class BatchJobListener implements JobListener {
         List<Map<String, String>> headers = Lists.newArrayList();
         MessageHeader messageHeader = MessageHeader.builder()
                 .actionId(jobCtx.getActionId())
-                .objectModel(jobCtx.getActionProps().getStr("batch.record.mapper.class"))
+                .objectModel(jobCtx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
                 .requestToken(jobCtx.getRequestToken())
                 .jobComplete(true)
                 .jobStart(false)
@@ -58,6 +63,6 @@ public class BatchJobListener implements JobListener {
         Map<String, String> header = Maps.newHashMap();
         header.put("X-Batch-Meta-Json", messageHeader.toString());
         headers.add(header);
-        sender.send("port.test", jobCtx.getActionId(), "Batch complete", headers);
+        sender.send(topic, jobCtx.getActionId(), "Batch complete", headers);
     }
 }

@@ -40,7 +40,7 @@ public class KafkaReceiver {
 
     }
 
-    @KafkaListener(topics = {"port.test"})
+    @KafkaListener(topics = {"${spring.kafka.topic}"})
     public void listen(ConsumerRecord<?, ?> record, @Header("X-Batch-Meta-Json") String metaJson) {
         Optional<?> kafkaMessage = Optional.ofNullable(record.value());
         if (kafkaMessage.isPresent()) {

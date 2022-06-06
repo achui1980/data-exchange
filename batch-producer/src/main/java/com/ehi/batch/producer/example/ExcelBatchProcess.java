@@ -15,6 +15,7 @@ import org.jeasy.batch.core.reader.RecordReader;
 import org.jeasy.batch.core.record.Record;
 import org.jeasy.batch.core.writer.RecordWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
@@ -31,6 +32,9 @@ public class ExcelBatchProcess extends AbstractBatchProcessor<String, String> {
     public static final String ACTION_ID = "ExcelBatchProcessor";
     @Autowired
     KafkaSender sender;
+
+    @Value("${spring.kafka.topic}")
+    private String topic;
 
     private RecordReader<String> getReaderBean(JobContext ctx) {
         Path datasource = Paths.get(ctx.getSourceData().toURI());
@@ -52,7 +56,7 @@ public class ExcelBatchProcess extends AbstractBatchProcessor<String, String> {
                         .build();
                 header.put("X-Batch-Meta-Json", messageHeader.toString());
                 headers.add(header);
-                sender.send("port.test", ctx.getActionId(), record.getPayload(), headers);
+                sender.send(topic, ctx.getActionId(), record.getPayload(), headers);
             }
         };
     }

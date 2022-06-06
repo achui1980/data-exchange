@@ -1,8 +1,5 @@
 package com.ehi.batch.producer.kafka;
 
-import com.ehi.batch.model.Message;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -11,7 +8,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -26,16 +22,14 @@ public class KafkaSender {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    private Gson gson = new GsonBuilder().create();
-
     //发送消息方法
     public void send(String msg) {
         this.send("port.test", null, msg, null);
     }
 
     //发送消息方法
-    public void send(String topic,String key, String msg, List<Map<String, String>> headers) {
-        ProducerRecord<String, String> record = new ProducerRecord("port.test", key, msg);
+    public void send(String topic, String key, String msg, List<Map<String, String>> headers) {
+        ProducerRecord<String, String> record = new ProducerRecord(topic, key, msg);
         if (CollectionUtils.isNotEmpty(headers)) {
             for (Map<String, String> header : headers) {
                 for (Map.Entry<String, String> head : header.entrySet()) {

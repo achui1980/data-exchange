@@ -36,7 +36,7 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
     abstract public JobConfiguration<I, O> config(JobContext ctx) throws BatchJobException;
 
     /**
-     * configure listener, reader, wirtter etc.
+     * configure listener, reader, writer etc.
      *
      * @param ctx
      * @return
@@ -47,7 +47,7 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
         JobBuilder<I, O> jobBuilder = new JobBuilder<I, O>()
                 .named(jobName)
                 .jobListener(batchJobListener)
-                .batchSize(1);
+                .batchSize(50);
         JobConfiguration<I, O> jobConfiguration = this.config(ctx);
         if (jobConfiguration.getRecordFilter() != null) {
             jobBuilder.filter(jobConfiguration.getRecordFilter());
