@@ -7,9 +7,10 @@
 ## 设计图
 
 ### 架构图 ###
-![03f99de9f424ae63d758a6bc624d07f1.png](:/79d2416e70d84d32b28ba4c2eb383f37)
+### 架构图 ###
+![](https://github.com/achui1980/data-exchange/blob/develop/diagram/architecture.png?raw=true)
 ### 数据流 ###
-![7ba1053ff5413edab99ff5f5c5ce9590.png](:/9507121d23f24e53a8c2d426d3329a0f)
+![](https://raw.githubusercontent.com/achui1980/data-exchange/develop/diagram/dataflow.png)
 Edit
 
 ## 设计实现
