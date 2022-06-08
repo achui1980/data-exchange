@@ -54,10 +54,9 @@ public class KafkaReceiver {
                         .message(message)
                         .propertyFile(actionProps)
                         .build();
-                String bean = actionProps.getStr("batch.job.handler.name");
+                String bean = actionProps.getStr(PropertyConstant.BATCH_JOB_HANDLER_NAME);
                 RecordHandler handler = appCtx.getBean(bean, RecordHandler.class);
                 handler.processRecord(ctx);
-
             } catch (Exception e) {
                 log.error("error while covert to class", e);
             }
