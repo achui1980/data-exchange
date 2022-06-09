@@ -46,3 +46,11 @@ Edit
 - 生成业务指标
 
     - [ ] 任务处理时间
+### 开发组件
+- Spring Boot (API开发)
+- [Easy Batch](https://github.com/j-easy/easy-batch)
+- [Guava (并发编程, EventBus)](https://github.com/google/guava)
+- Kafka
+- Redis
+- [OpenCsv](http://opencsv.sourceforge.net/)
+- [Easy Excel](https://easyexcel.opensource.alibaba.com/docs/current/)

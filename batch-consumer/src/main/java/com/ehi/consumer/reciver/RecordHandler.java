@@ -1,6 +1,7 @@
 package com.ehi.consumer.reciver;
 
 import com.ehi.batch.exception.BatchJobException;
+import com.ehi.batch.model.BatchJobReport;
 
 /**
  * @author portz
@@ -8,5 +9,5 @@ import com.ehi.batch.exception.BatchJobException;
  */
 public interface RecordHandler {
 
-    void processRecord(ConsumerJobContext ctx) throws BatchJobException;
+    BatchJobReport processRecord(ConsumerJobContext ctx) throws BatchJobException;
 }

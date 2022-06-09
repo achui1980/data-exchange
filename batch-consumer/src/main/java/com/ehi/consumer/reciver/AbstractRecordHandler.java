@@ -1,18 +1,23 @@
 package com.ehi.consumer.reciver;
 
 import com.ehi.batch.exception.BatchJobException;
+import com.ehi.batch.model.BatchJobMetric;
+import com.ehi.batch.model.BatchJobReport;
 import com.google.common.base.Stopwatch;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author portz
@@ -22,55 +27,78 @@ import java.util.concurrent.Executors;
 public abstract class AbstractRecordHandler implements RecordHandler {
 
     Stopwatch sw;
-    private Map<String, ListeningExecutorService> threadPoolMap = Maps.newConcurrentMap();
-    private Map<String, List<ListenableFuture<Boolean>>> listMap = Maps.newConcurrentMap();
-    private int count = 0;
+    private Cache<String, ListeningExecutorService> threadPoolCache = CacheBuilder.newBuilder().build();
+    private Cache<String, List<ListenableFuture<Boolean>>> listCache = CacheBuilder.newBuilder().build();
+    private BatchJobReport report;
+    private BatchJobMetric metrics;
+    private int totalCount = 0;
+
+    @PostConstruct
+    public void init() {
+
+    }
 
     @Override
-    public void processRecord(ConsumerJobContext ctx) throws BatchJobException {
+    public BatchJobReport processRecord(ConsumerJobContext ctx) throws BatchJobException {
         String actionId = ctx.getMessageMeta().getActionId();
         boolean isJobComplete = ctx.getMessageMeta().isJobComplete();
         boolean isJobStart = ctx.getMessageMeta().isJobStart();
-        ListeningExecutorService executorService = threadPoolMap.get(actionId);
-        List<ListenableFuture<Boolean>> executeResultList = listMap.get(actionId);
-        if (executorService == null) {
-            executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(5));
-            threadPoolMap.put(actionId, executorService);
+        ListeningExecutorService executorService;
+        List<ListenableFuture<Boolean>> executeResultList;
+        try {
+            executorService = threadPoolCache.get(actionId, () -> MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(5)));
+            executeResultList = listCache.get(actionId, () -> Lists.newArrayList());
+        } catch (ExecutionException ex) {
+            throw new BatchJobException("create cache error", ex);
         }
-        if (executeResultList == null) {
-            executeResultList = Lists.newArrayList();
-            listMap.put(actionId, executeResultList);
-        }
+
         if (isJobStart) {
             sw = Stopwatch.createUnstarted();
             sw.start();
+            report.setActionId(actionId);
+            report.setRequestToken(ctx.getMessageMeta().getRequestToken());
         }
         if (!(isJobStart || isJobComplete)) {
             executeResultList.add(executorService.submit(() -> {
                 handleEachRecord(ctx);
                 return Boolean.TRUE;
             }));
-            count++;
-            //listMap.put(actionId, list);
+            totalCount++;
         }
         if (isJobComplete) {
+            int successCount = -1;
             try {
-                completeJob(executeResultList, executorService, ctx);
+                successCount = completeJob(executeResultList, executorService, ctx);
             } catch (Exception e) {
                 throw new BatchJobException("complete job error ", e);
             } finally {
                 sw.stop();
-                log.warn(" complete {} in {}", count, sw);
+                log.warn(" complete {} in {}", totalCount, sw);
+                createMetrics(successCount);
+                totalCount = 0;
             }
         }
+        return this.report;
     }
 
-    private void completeJob(List<ListenableFuture<Boolean>> executeResultList, ListeningExecutorService executorService, ConsumerJobContext ctx) throws Exception {
+    private void createMetrics(int successCount) {
+        this.report = new BatchJobReport();
+        this.metrics = new BatchJobMetric();
+        this.metrics.setProcessTime(sw.toString());
+        this.metrics.setDuration(sw.elapsed(TimeUnit.MILLISECONDS));
+        this.metrics.setTotalCount(totalCount);
+        this.metrics.setSuccessCount(successCount);
+        this.metrics.setFailureCount(totalCount - successCount);
+        this.report.setMetrics(metrics);
+    }
+
+    private Integer completeJob(List<ListenableFuture<Boolean>> executeResultList, ListeningExecutorService executorService, ConsumerJobContext ctx) throws Exception {
         ListenableFuture<List<Boolean>> executionList = Futures.successfulAsList(executeResultList);
         //waiting for all tasks complete
-        executionList.get();
+        List<Boolean> result = executionList.get();
         closeResource(executeResultList, executorService, ctx);
         whenJobComplete(ctx);
+        return result.size();
     }
 
     /**
@@ -90,8 +118,8 @@ public abstract class AbstractRecordHandler implements RecordHandler {
     private void closeResource(List<ListenableFuture<Boolean>> executeResultList, ListeningExecutorService executorService, ConsumerJobContext ctx) {
         String actionId = ctx.getMessageMeta().getActionId();
         executorService.shutdown();
-        threadPoolMap.remove(actionId);
+        threadPoolCache.invalidate(actionId);
         executeResultList.clear();
-        listMap.remove(actionId);
+        listCache.invalidate(actionId);
     }
 }

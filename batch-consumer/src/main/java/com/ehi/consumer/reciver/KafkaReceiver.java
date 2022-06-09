@@ -2,6 +2,7 @@ package com.ehi.consumer.reciver;
 
 import cn.hutool.setting.dialect.Props;
 import com.ehi.batch.PropertyConstant;
+import com.ehi.batch.model.BatchJobReport;
 import com.ehi.batch.model.MessageHeader;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -47,6 +48,7 @@ public class KafkaReceiver {
             Object message = kafkaMessage.get();
             try {
                 MessageHeader messageMeta = gson.fromJson(metaJson, MessageHeader.class);
+                boolean isJobComplete = messageMeta.isJobComplete();
                 URL url = this.getClass().getResource("/demo/" + messageMeta.getActionId() + ".properties");
                 Props actionProps = cache.get(messageMeta.getActionId(), () -> new Props(url.getFile()));
                 ConsumerJobContext ctx = ConsumerJobContext.builder()
@@ -56,7 +58,10 @@ public class KafkaReceiver {
                         .build();
                 String bean = actionProps.getStr(PropertyConstant.BATCH_JOB_HANDLER_NAME);
                 RecordHandler handler = appCtx.getBean(bean, RecordHandler.class);
-                handler.processRecord(ctx);
+                BatchJobReport report = handler.processRecord(ctx);
+                if (isJobComplete) {
+                    log.info("=======report======= {}", report);
+                }
             } catch (Exception e) {
                 log.error("error while covert to class", e);
             }
