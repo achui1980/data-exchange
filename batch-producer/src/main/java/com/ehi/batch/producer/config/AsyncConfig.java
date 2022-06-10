@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
  * @date 05/16/2022 13:51
  */
 @Configuration
-@EnableAsync
 @Slf4j
 public class AsyncConfig {
     private static final Integer EVENT_BUS_THREAD_POOL_SIZE = 20;

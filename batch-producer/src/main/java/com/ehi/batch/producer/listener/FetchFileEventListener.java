@@ -1,7 +1,7 @@
 package com.ehi.batch.producer.listener;
 
 import com.ehi.batch.exception.BatchJobException;
-import com.ehi.batch.producer.core.connector.sftp.SftpTemplate;
+import com.ehi.batch.producer.core.connector.Connector;
 import com.ehi.batch.producer.core.context.FetchContext;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.google.common.eventbus.Subscribe;
@@ -25,9 +25,9 @@ public class FetchFileEventListener {
         log.info("========= begin to download ===========");
         JobContext jobCtx = JobContext.builder().build();
         jobCtx.convertFrom(fetchCtx);
-        SftpTemplate sftpTemplate = appCtx.getBean(SftpTemplate.class);
-        sftpTemplate.setJobCtx(jobCtx);
-        sftpTemplate.download();
+        String connectorBeanName = fetchCtx.getActionProps().getStr("batch.job.connector", "SftpConnector");
+        Connector connector = appCtx.getBean(connectorBeanName, Connector.class);
+        connector.download(jobCtx);
         log.info("========= end download ===========");
     }
 }

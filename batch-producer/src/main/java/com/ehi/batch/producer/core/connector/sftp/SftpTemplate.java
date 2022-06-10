@@ -4,6 +4,8 @@ import cn.hutool.extra.ssh.ChannelType;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.setting.dialect.Props;
 import com.ehi.batch.exception.SSHException;
+import com.ehi.batch.producer.core.listener.DefaultOperationListener;
+import com.ehi.batch.producer.core.listener.OperationListener;
 import com.ehi.batch.producer.core.annotation.ExecuteTimer;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.google.common.collect.Lists;
@@ -80,14 +82,14 @@ public class SftpTemplate {
                 .password(props.getStr("sftp.password"))
                 .privateKey(props.getStr("sftp.private.key", null))
                 .privateKeyPassword(props.getStr("sftp.private.key.password", null))
-                .fileFilterRegex(props.getStr("sftp.file.filter.regex"))
+                .fileFilterRegex(props.getStr("file.filter.regex"))
                 .timeout(props.getInt("sftp.timeout", 60000))
                 .folder(props.getStr("sftp.folder", "."))
                 .archiveFolder(props.getStr("archive.folder", "/"))
                 .build();
     }
 
-    public void execute(Consumer<SftpOperation> operation, List<SftpOperationListener> sftpListerners) {
+    public void execute(Consumer<SftpOperation> operation, List<OperationListener> sftpListerners) {
         Sftp sftp = initSftp();
         log.info("Sftp info: {}", sftp.toString());
         Session session;
@@ -137,18 +139,18 @@ public class SftpTemplate {
             } finally {
                 files.clear();
             }
-        }, Lists.newArrayList(new DefaultSftpOperationListener()));
+        }, Lists.newArrayList(new DefaultOperationListener()));
     }
 
-    private void doBefore(List<SftpOperationListener> listeners, JobContext jobCtx) {
-        for (SftpOperationListener sftpListener : listeners) {
-            sftpListener.beforeSftpOperation(jobCtx);
+    private void doBefore(List<OperationListener> listeners, JobContext jobCtx) {
+        for (OperationListener sftpListener : listeners) {
+            sftpListener.beforeOperation(jobCtx);
         }
     }
 
-    private void doAfter(List<SftpOperationListener> listeners, JobContext jobCtx) {
-        for (SftpOperationListener sftpListener : listeners) {
-            sftpListener.afterSftpOperation(jobCtx);
+    private void doAfter(List<OperationListener> listeners, JobContext jobCtx) {
+        for (OperationListener sftpListener : listeners) {
+            sftpListener.afterOperation(jobCtx);
         }
     }
 

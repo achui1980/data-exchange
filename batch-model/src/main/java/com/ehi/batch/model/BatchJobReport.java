@@ -9,6 +9,6 @@ import lombok.Data;
 @Data
 public class BatchJobReport {
     private String actionId;
-    private BatchJobMetric metrics;
     private String requestToken;
+    private BatchJobMetric metrics;
 }

@@ -55,8 +55,7 @@ public abstract class AbstractRecordHandler implements RecordHandler {
         if (isJobStart) {
             sw = Stopwatch.createUnstarted();
             sw.start();
-            report.setActionId(actionId);
-            report.setRequestToken(ctx.getMessageMeta().getRequestToken());
+
         }
         if (!(isJobStart || isJobComplete)) {
             executeResultList.add(executorService.submit(() -> {
@@ -74,16 +73,18 @@ public abstract class AbstractRecordHandler implements RecordHandler {
             } finally {
                 sw.stop();
                 log.warn(" complete {} in {}", totalCount, sw);
-                createMetrics(successCount);
+                createMetrics(successCount, ctx);
                 totalCount = 0;
             }
         }
         return this.report;
     }
 
-    private void createMetrics(int successCount) {
+    private void createMetrics(int successCount, ConsumerJobContext ctx) {
         this.report = new BatchJobReport();
         this.metrics = new BatchJobMetric();
+        report.setActionId(ctx.getMessageMeta().getActionId());
+        report.setRequestToken(ctx.getMessageMeta().getRequestToken());
         this.metrics.setProcessTime(sw.toString());
         this.metrics.setDuration(sw.elapsed(TimeUnit.MILLISECONDS));
         this.metrics.setTotalCount(totalCount);

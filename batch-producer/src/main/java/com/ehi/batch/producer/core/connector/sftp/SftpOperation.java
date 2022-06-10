@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.core.connector.sftp;
 
+import com.ehi.batch.producer.core.listener.OperationListener;
 import com.jcraft.jsch.ChannelSftp;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +19,6 @@ import java.util.List;
 @NoArgsConstructor
 public class SftpOperation {
     private ChannelSftp channelSftp;
-    private List<SftpOperationListener> sftpListerners;
+    private List<OperationListener> sftpListerners;
     private Sftp sftp;
 }

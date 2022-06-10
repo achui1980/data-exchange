@@ -6,11 +6,11 @@ import com.ehi.batch.model.MessageHeader;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.processor.AbstractBatchProcessor;
-import com.ehi.batch.producer.core.reader.ExcelItemReader;
+import com.ehi.batch.producer.core.reader.JsonItemReader;
 import com.ehi.batch.producer.kafka.KafkaSender;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.jeasy.batch.core.processor.RecordProcessor;
+import lombok.extern.slf4j.Slf4j;
 import org.jeasy.batch.core.reader.RecordReader;
 import org.jeasy.batch.core.record.Record;
 import org.jeasy.batch.core.writer.RecordWriter;
@@ -25,11 +25,12 @@ import java.util.Map;
 
 /**
  * @author portz
- * @date 06/02/2022 15:26
+ * @date 06/10/2022 14:37
  */
-@Component(ExcelBatchProcess.ACTION_ID)
-public class ExcelBatchProcess extends AbstractBatchProcessor<String, String> {
-    public static final String ACTION_ID = "ExcelBatchProcessor";
+@Component("JsonBatchProcessor")
+@Slf4j
+public class JsonBatchProcessor extends AbstractBatchProcessor<String, String> {
+    public static final String ACTION_ID = "JsonBatchProcessor";
     @Autowired
     KafkaSender sender;
 
@@ -37,9 +38,12 @@ public class ExcelBatchProcess extends AbstractBatchProcessor<String, String> {
     private String topic;
 
     private RecordReader<String> getReaderBean(JobContext ctx) {
-        Path datasource = Paths.get(ctx.getSourceData().toURI());
-        ExcelItemReader excelItemReader = new ExcelItemReader(datasource, ctx.getActionProps());
-        return excelItemReader;
+        Path datasource = null;
+        if (ctx.getSourceData() != null) {
+            datasource = Paths.get(ctx.getSourceData().toURI());
+        }
+        JsonItemReader jsonItemReader = new JsonItemReader(datasource, ctx.getActionProps(), ctx.getActionId());
+        return jsonItemReader;
     }
 
     private RecordWriter<String> getWriterBean(JobContext ctx) {
@@ -61,16 +65,11 @@ public class ExcelBatchProcess extends AbstractBatchProcessor<String, String> {
         };
     }
 
-    private RecordProcessor<String, String> getItemProcessBean(JobContext ctx) {
-        return record -> record;
-    }
-
     @Override
     public JobConfiguration<String, String> config(JobContext ctx) throws BatchJobException {
         return JobConfiguration.<String, String>builder()
                 .recordReader(getReaderBean(ctx))
                 .recordWriter(getWriterBean(ctx))
-                .recordProcessor(getItemProcessBean(ctx))
                 .build();
     }
 }

@@ -14,6 +14,7 @@ import java.io.File;
 @SuperBuilder(toBuilder = true)
 public class JobContext extends Context {
     private File sourceData;
+    private String response;
     private ChannelSftp.LsEntry sftpFile;
 
     public JobContext convertFrom(FetchContext ctx) {
