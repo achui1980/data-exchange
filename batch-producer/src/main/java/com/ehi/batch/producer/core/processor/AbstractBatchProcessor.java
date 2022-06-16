@@ -46,7 +46,6 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
         batchJobListener.setJobCtx(ctx);
         JobBuilder<I, O> jobBuilder = new JobBuilder<I, O>()
                 .named(jobName)
-                .jobListener(batchJobListener)
                 .batchSize(50);
         JobConfiguration<I, O> jobConfiguration = this.config(ctx);
         if (jobConfiguration.getRecordFilter() != null) {
@@ -56,11 +55,13 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
             jobBuilder.batchSize(jobConfiguration.getBatchSize());
         }
         if (jobConfiguration.getBatchListener() != null) {
-            log.warn("Please make sure you implement the logic in {} !!!", BatchJobListener.class.getName());
             jobBuilder.batchListener(jobConfiguration.getBatchListener());
         }
         if (jobConfiguration.getJobListener() != null) {
+            log.warn("Please make sure you've implemented the logic in {} !!!", BatchJobListener.class.getName());
             jobBuilder.jobListener(jobConfiguration.getJobListener());
+        } else {
+            jobBuilder.jobListener(batchJobListener);
         }
         if (jobConfiguration.getRecordProcessor() != null) {
             jobBuilder.processor(jobConfiguration.getRecordProcessor());

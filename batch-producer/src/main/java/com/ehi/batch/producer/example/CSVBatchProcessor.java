@@ -2,14 +2,12 @@ package com.ehi.batch.producer.example;
 
 import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.exception.BatchJobException;
-import com.ehi.batch.model.MessageHeader;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.processor.AbstractBatchProcessor;
 import com.ehi.batch.producer.core.reader.CSVItemReader;
 import com.ehi.batch.producer.kafka.KafkaSender;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jeasy.batch.core.processor.RecordProcessor;
@@ -44,7 +42,7 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
 
     private RecordReader<String> getReaderBean(JobContext ctx) {
         Path datasource = Paths.get(ctx.getSourceData().toURI());
-        return new CSVItemReader(datasource,ctx.getActionProps());
+        return new CSVItemReader(datasource, ctx.getActionProps());
     }
 
     private RecordWriter<String> getWriterBean(JobContext ctx) {
@@ -52,17 +50,8 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
         return batch -> {
             List<Map<String, String>> headers = Lists.newArrayList();
             for (Record<String> record : batch) {
-                Map<String, String> header = Maps.newHashMap();
-                MessageHeader messageHeader = MessageHeader.builder()
-                        .actionId(ctx.getActionId())
-                        .rowNumber(record.getHeader().getNumber())
-                        .objectModel(ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
-                        .requestToken(ctx.getRequestToken())
-                        .build();
                 String json = gson.toJson(record.getPayload());
-                header.put("X-Batch-Meta-Json", messageHeader.toString());
-                headers.add(header);
-                sender.send(topic, ctx.getActionId(), json, headers);
+                sender.sendKafkaJobFlag(topic, json, ctx, false, false);
             }
         };
     }
@@ -76,12 +65,11 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
         String mapperClass = ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL);
         String[] columns = ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_COLUMNS).split(",");
         try {
-            Class mapperClzz = Class.forName(mapperClass);
+            Class targetClass = Class.forName(mapperClass);
             return JobConfiguration.<String, String>builder()
                     .recordReader(getReaderBean(ctx))
                     .recordWriter(getWriterBean(ctx))
-                    .recordMapper(new OpenCsvRecordMapper(mapperClzz, columns))
-                    //.recordProcessor(getItemProcessBean(ctx))
+                    .recordMapper(new OpenCsvRecordMapper(targetClass, columns))
                     .build();
         } catch (ClassNotFoundException e) {
             throw new BatchJobException("can not find class " + mapperClass, e);

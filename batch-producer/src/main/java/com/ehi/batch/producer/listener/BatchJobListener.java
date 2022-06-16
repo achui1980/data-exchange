@@ -36,33 +36,11 @@ public class BatchJobListener implements JobListener {
 
     @Override
     public void beforeJob(JobParameters jobParameters) {
-        List<Map<String, String>> headers = Lists.newArrayList();
-        MessageHeader messageHeader = MessageHeader.builder()
-                .actionId(jobCtx.getActionId())
-                .objectModel(jobCtx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
-                .requestToken(jobCtx.getRequestToken())
-                .jobComplete(false)
-                .jobStart(true)
-                .build();
-        Map<String, String> header = Maps.newHashMap();
-        header.put("X-Batch-Meta-Json", messageHeader.toString());
-        headers.add(header);
-        sender.send(topic, jobCtx.getActionId(), "Batch Start", headers);
+        sender.sendKafkaJobFlag(topic, "Batch Start", jobCtx, true, false);
     }
 
     @Override
     public void afterJob(JobReport jobReport) {
-        List<Map<String, String>> headers = Lists.newArrayList();
-        MessageHeader messageHeader = MessageHeader.builder()
-                .actionId(jobCtx.getActionId())
-                .objectModel(jobCtx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
-                .requestToken(jobCtx.getRequestToken())
-                .jobComplete(true)
-                .jobStart(false)
-                .build();
-        Map<String, String> header = Maps.newHashMap();
-        header.put("X-Batch-Meta-Json", messageHeader.toString());
-        headers.add(header);
-        sender.send(topic, jobCtx.getActionId(), "Batch complete", headers);
+        sender.sendKafkaJobFlag(topic, "Batch Complete", jobCtx, false, true);
     }
 }

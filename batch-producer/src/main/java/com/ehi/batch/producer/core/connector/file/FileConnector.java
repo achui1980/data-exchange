@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.core.connector.file;
 
+import com.ehi.batch.producer.core.connector.DownloadData;
 import com.ehi.batch.producer.core.listener.OperationListener;
 import com.ehi.batch.producer.core.connector.Connector;
 import com.ehi.batch.producer.core.listener.DefaultOperationListener;
@@ -38,10 +39,8 @@ public class FileConnector implements Connector {
         });
         if (files == null || files.length == 0) {
             log.info("not file found");
-            return;
         }
         Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
-        DefaultOperationListener listener = new DefaultOperationListener();
         for (File file : files) {
             doBefore(listeners, ctx);
             ctx.setSourceData(file);

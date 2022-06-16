@@ -1,6 +1,7 @@
 package com.ehi.batch.producer.core.connector.sftp;
 
 import com.ehi.batch.producer.core.connector.Connector;
+import com.ehi.batch.producer.core.connector.DownloadData;
 import com.ehi.batch.producer.core.context.JobContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

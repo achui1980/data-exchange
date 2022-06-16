@@ -2,6 +2,7 @@ package com.ehi.batch.producer.core.reader;
 
 import cn.hutool.setting.dialect.Props;
 import com.ehi.batch.producer.core.ApplicationContextProvider;
+import com.ehi.batch.producer.core.context.JobContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
@@ -16,6 +17,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import java.util.Optional;
 
 /**
  * @author portz
@@ -24,26 +26,26 @@ import java.util.Iterator;
 public class JsonItemReader extends AbstractFileRecordReader<String> {
 
     private final Cache<String, String> guavaCache;
-    private Props config;
-    private String actionId;
     private Iterator<JsonNode> iterator;
     private long currentRecordNumber;
+    private JobContext ctx;
 
-    public JsonItemReader(Path path, Props config, String actionId) {
+    public JsonItemReader(Path path, JobContext ctx) {
         super(path);
         guavaCache = ApplicationContextProvider.getApplicationContext().getBean("GuavaCache", Cache.class);
-        this.config = config;
-        this.actionId = actionId;
+        this.ctx = ctx;
     }
 
     @Override
     public void open() throws Exception {
         String cacheJson;
+        String batch = Optional.ofNullable(ctx.getBatch()).orElse("0");
+        String key = ctx.getActionId() + batch;
         if (path != null) {
             String json = FileUtils.readFileToString(path.toFile(), Charset.defaultCharset());
-            cacheJson = guavaCache.get(actionId, () -> json);
+            cacheJson = guavaCache.get(key, () -> json);
         } else {
-            cacheJson = guavaCache.getIfPresent(actionId);
+            cacheJson = guavaCache.getIfPresent(key);
         }
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonNode = mapper.readTree(cacheJson);
@@ -66,7 +68,9 @@ public class JsonItemReader extends AbstractFileRecordReader<String> {
 
     @Override
     public void close() throws Exception {
-        guavaCache.invalidate(actionId);
+        String batch = Optional.ofNullable(ctx.getBatch()).orElse("0");
+        String key = ctx.getActionId() + batch;
+        guavaCache.invalidate(key);
     }
 
     private String getDataSourceName() {

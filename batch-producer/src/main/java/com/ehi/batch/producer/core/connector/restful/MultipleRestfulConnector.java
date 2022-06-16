@@ -5,8 +5,8 @@ import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.Method;
 import com.ehi.batch.exception.BatchJobException;
-import com.ehi.batch.producer.core.annotation.ExecuteTimer;
 import com.ehi.batch.producer.core.connector.Connector;
+import com.ehi.batch.producer.core.connector.DownloadData;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.listener.DefaultOperationListener;
 import com.ehi.batch.producer.core.listener.KafkaSendFlagListener;
@@ -14,14 +14,19 @@ import com.ehi.batch.producer.core.listener.OperationListener;
 import com.google.common.base.Splitter;
 import com.google.common.cache.Cache;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.SerializationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.Executors;
 
 /**
  * @author portz
@@ -29,14 +34,16 @@ import java.util.Optional;
  */
 @Component("RestfulConnector")
 @Slf4j
-public abstract class RestfulConnector implements Connector {
+public abstract class MultipleRestfulConnector implements Connector {
+    @Autowired
+    private Cache<String, String> guavaCache;
 
     @Autowired
     KafkaSendFlagListener kafkaSendFlagListener;
-    private List<OperationListener> listeners;
 
-    @Autowired
-    private Cache<String, String> guavaCache;
+    private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+    private List<ListenableFuture<Boolean>> futureList = Lists.newArrayList();
+    private List<OperationListener> listeners;
 
     @PostConstruct
     public void init() {
@@ -44,8 +51,41 @@ public abstract class RestfulConnector implements Connector {
     }
 
     @Override
-    @ExecuteTimer
     public void download(JobContext ctx) {
+        DownloadData downloadData = firstFetch(ctx, 0);
+        String responseData = downloadData.getData();
+        Integer times = this.times(responseData);
+        kafkaSendFlagListener.beforeOperation(ctx);
+        for (int i = 0; i < times; i++) {
+            int batch = i;
+            JobContext cloneCtx = SerializationUtils.clone(ctx);
+            ListenableFuture<Boolean> future = executorService.submit(() -> {
+                DownloadData data = this.firstFetch(cloneCtx, batch);
+                cloneCtx.setBatch(String.valueOf(batch));
+                doBefore(listeners, cloneCtx);
+                guavaCache.put(cloneCtx.getActionId() + batch, data.getData());
+                cloneCtx.setResponse(data.getData());
+                doAfter(listeners, cloneCtx);
+                return Boolean.TRUE;
+            });
+            futureList.add(future);
+        }
+        ListenableFuture<List<Boolean>> executionList = Futures.successfulAsList(futureList);
+        try {
+            executionList.get();
+        } catch (Exception ex) {
+            log.error("complete thread pool error ", ex);
+        } finally {
+            kafkaSendFlagListener.afterOperation(ctx);
+        }
+
+    }
+
+    public Integer times(String response) {
+        return 100;
+    }
+
+    private DownloadData firstFetch(JobContext ctx, Integer batch) {
         String url = ctx.getActionProps().getStr("connector.restful.api.url") + this.queryParams();
         String method = ctx.getActionProps().getStr("connector.restful.api.method");
         String headerStr = ctx.getActionProps().getStr("connector.restful.api.headers");
@@ -58,16 +98,13 @@ public abstract class RestfulConnector implements Connector {
         req.body(this.getRequestBody());
         HttpResponse response = req.execute();
         String data = this.handlerJsonResponse(response.body());
-        String batch = Optional.ofNullable(ctx.getBatch()).orElse("0");
-        String key = ctx.getActionId() + batch;
-        kafkaSendFlagListener.beforeOperation(ctx);
-        doBefore(listeners, ctx);
-        guavaCache.put(key, data);
-        ctx.setResponse(data);
-        doAfter(listeners, ctx);
-        kafkaSendFlagListener.afterOperation(ctx);
-
+        return DownloadData.builder()
+                .currentBatch(batch)
+                .actionId(ctx.getActionId())
+                .data(data)
+                .build();
     }
+
 
     public abstract String getRequestBody();
 

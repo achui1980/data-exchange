@@ -8,6 +8,7 @@ import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.processor.AbstractBatchProcessor;
 import com.ehi.batch.producer.core.reader.JsonItemReader;
 import com.ehi.batch.producer.kafka.KafkaSender;
+import com.ehi.batch.producer.listener.DummyJobListener;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +43,7 @@ public class JsonBatchProcessor extends AbstractBatchProcessor<String, String> {
         if (ctx.getSourceData() != null) {
             datasource = Paths.get(ctx.getSourceData().toURI());
         }
-        JsonItemReader jsonItemReader = new JsonItemReader(datasource, ctx.getActionProps(), ctx.getActionId());
+        JsonItemReader jsonItemReader = new JsonItemReader(datasource, ctx);
         return jsonItemReader;
     }
 
@@ -70,6 +71,7 @@ public class JsonBatchProcessor extends AbstractBatchProcessor<String, String> {
         return JobConfiguration.<String, String>builder()
                 .recordReader(getReaderBean(ctx))
                 .recordWriter(getWriterBean(ctx))
+                .jobListener(new DummyJobListener())
                 .build();
     }
 }
