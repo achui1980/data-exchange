@@ -1,4 +1,4 @@
-package com.ehi.batch.producer.example;
+package com.ehi.batch.producer.processor;
 
 import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.exception.BatchJobException;

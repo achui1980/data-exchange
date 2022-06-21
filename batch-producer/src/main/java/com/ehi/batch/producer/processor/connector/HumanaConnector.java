@@ -1,8 +1,7 @@
-package com.ehi.batch.producer.example.connector;
+package com.ehi.batch.producer.processor.connector;
 
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.connector.restful.MultipleRestfulConnector;
-import com.ehi.batch.producer.core.connector.restful.RestfulConnector;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;

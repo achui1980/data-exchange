@@ -1,8 +1,9 @@
-package com.ehi.consumer.reciver;
+package com.ehi.consumer.reciver.handler;
 
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.model.BatchJobMetric;
 import com.ehi.batch.model.BatchJobReport;
+import com.ehi.consumer.reciver.ConsumerJobContext;
 import com.google.common.base.Stopwatch;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

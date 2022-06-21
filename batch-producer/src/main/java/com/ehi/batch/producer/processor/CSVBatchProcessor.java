@@ -1,12 +1,15 @@
-package com.ehi.batch.producer.example;
+package com.ehi.batch.producer.processor;
 
+import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.core.processor.AbstractBatchProcessor;
-import com.ehi.batch.producer.core.reader.ExcelItemReader;
+import com.ehi.batch.producer.core.reader.CSVItemReader;
 import com.ehi.batch.producer.kafka.KafkaSender;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jeasy.batch.core.processor.RecordProcessor;
 import org.jeasy.batch.core.reader.RecordReader;
 import org.jeasy.batch.core.record.Record;
@@ -22,11 +25,15 @@ import java.util.Map;
 
 /**
  * @author portz
- * @date 06/02/2022 15:26
+ * @date 05/09/2022 9:41
  */
-@Component(ExcelBatchProcessor.ACTION_ID)
-public class ExcelBatchProcessor extends AbstractBatchProcessor<String, String> {
-    public static final String ACTION_ID = "ExcelBatchProcessor";
+@Component(CSVBatchProcessor.ACTION_ID)
+public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
+
+    public static final String ACTION_ID = "CSVBatchProcessor";
+
+    Gson gson = new GsonBuilder().create();
+
     @Autowired
     KafkaSender sender;
 
@@ -35,8 +42,7 @@ public class ExcelBatchProcessor extends AbstractBatchProcessor<String, String> 
 
     private RecordReader<String> getReaderBean(JobContext ctx) {
         Path datasource = Paths.get(ctx.getSourceData().toURI());
-        ExcelItemReader excelItemReader = new ExcelItemReader(datasource, ctx.getActionProps());
-        return excelItemReader;
+        return new CSVItemReader(datasource, ctx.getActionProps());
     }
 
     private RecordWriter<String> getWriterBean(JobContext ctx) {
@@ -44,7 +50,8 @@ public class ExcelBatchProcessor extends AbstractBatchProcessor<String, String> 
         return batch -> {
             List<Map<String, String>> headers = Lists.newArrayList();
             for (Record<String> record : batch) {
-                sender.sendKafkaJobFlag(topic, record.getPayload(), ctx, false, false);
+                String json = gson.toJson(record.getPayload());
+                sender.sendKafkaJobFlag(topic, json, ctx, false, false);
             }
         };
     }
@@ -55,10 +62,17 @@ public class ExcelBatchProcessor extends AbstractBatchProcessor<String, String> 
 
     @Override
     public JobConfiguration<String, String> config(JobContext ctx) throws BatchJobException {
-        return JobConfiguration.<String, String>builder()
-                .recordReader(getReaderBean(ctx))
-                .recordWriter(getWriterBean(ctx))
-                .recordProcessor(getItemProcessBean(ctx))
-                .build();
+        String mapperClass = ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL);
+        String[] columns = ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_COLUMNS).split(",");
+        try {
+            Class targetClass = Class.forName(mapperClass);
+            return JobConfiguration.<String, String>builder()
+                    .recordReader(getReaderBean(ctx))
+                    .recordWriter(getWriterBean(ctx))
+                    .recordMapper(new OpenCsvRecordMapper(targetClass, columns))
+                    .build();
+        } catch (ClassNotFoundException e) {
+            throw new BatchJobException("can not find class " + mapperClass, e);
+        }
     }
 }

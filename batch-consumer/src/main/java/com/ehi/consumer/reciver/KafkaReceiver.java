@@ -4,6 +4,7 @@ import cn.hutool.setting.dialect.Props;
 import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.model.BatchJobReport;
 import com.ehi.batch.model.MessageHeader;
+import com.ehi.consumer.reciver.handler.RecordHandler;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.gson.Gson;

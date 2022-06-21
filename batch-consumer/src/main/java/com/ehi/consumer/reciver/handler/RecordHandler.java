@@ -1,7 +1,8 @@
-package com.ehi.consumer.reciver;
+package com.ehi.consumer.reciver.handler;
 
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.model.BatchJobReport;
+import com.ehi.consumer.reciver.ConsumerJobContext;
 
 /**
  * @author portz
