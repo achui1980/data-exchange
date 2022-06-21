@@ -18,6 +18,11 @@ import org.springframework.stereotype.Component;
 public class HumanaConnector extends MultipleRestfulConnector {
 
     @Override
+    public Integer times(String response) {
+        return 100;
+    }
+
+    @Override
     public String getRequestBody() {
         return "{\n" +
                 "  \"partnerId\": \"1273481\",\n" +

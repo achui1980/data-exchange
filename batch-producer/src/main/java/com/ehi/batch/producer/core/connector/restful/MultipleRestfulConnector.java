@@ -84,9 +84,8 @@ public abstract class MultipleRestfulConnector implements Connector {
 
     }
 
-    public Integer times(String response) {
-        return 100;
-    }
+    public abstract Integer times(String response);
+
 
     private DownloadData firstFetch(JobContext ctx, Integer batch) {
         String url = ctx.getActionProps().getStr("connector.restful.api.url") + this.queryParams();

@@ -9,8 +9,10 @@ import com.google.common.cache.CacheBuilder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
@@ -30,6 +32,9 @@ public class KafkaReceiver {
 
     @Autowired
     ApplicationContext appCtx;
+
+    @Value("${application.data.resources}")
+    private String resourceFolder;
 
     Gson gson;
     private Cache<String, Props> cache;
@@ -51,7 +56,11 @@ public class KafkaReceiver {
                 MessageHeader messageMeta = gson.fromJson(metaJson, MessageHeader.class);
                 boolean isJobComplete = messageMeta.isJobComplete();
                 URL url = this.getClass().getResource("/demo/" + messageMeta.getActionId() + ".properties");
-                Props actionProps = cache.get(messageMeta.getActionId(), () -> new Props(url.getFile()));
+                if (StringUtils.isNotEmpty(resourceFolder)) {
+                    url = new URL("file://" + resourceFolder + "/" + messageMeta.getActionId() + ".properties");
+                }
+                final URL finalUrl = url;
+                Props actionProps = cache.get(messageMeta.getActionId(), () -> new Props(finalUrl.getFile()));
                 ConsumerJobContext ctx = ConsumerJobContext.builder()
                         .messageMeta(messageMeta)
                         .message(message)
