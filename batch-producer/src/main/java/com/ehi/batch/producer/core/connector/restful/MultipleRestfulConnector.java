@@ -4,6 +4,7 @@ import cn.hutool.core.net.url.UrlBuilder;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.Method;
+import com.ehi.batch.ExecuteMode;
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.connector.Connector;
 import com.ehi.batch.producer.core.connector.DownloadData;
@@ -42,8 +43,8 @@ public abstract class MultipleRestfulConnector implements Connector {
     KafkaSendFlagListener kafkaSendFlagListener;
 
     private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-    private List<ListenableFuture<Boolean>> futureList = Lists.newArrayList();
     private List<OperationListener> listeners;
+
 
     @PostConstruct
     public void init() {
@@ -52,6 +53,7 @@ public abstract class MultipleRestfulConnector implements Connector {
 
     @Override
     public void download(JobContext ctx) {
+        List<ListenableFuture<Boolean>> futureList = Lists.newArrayList();
         DownloadData downloadData = firstFetch(ctx, 0);
         String responseData = downloadData.getData();
         Integer times = this.times(responseData);
@@ -59,6 +61,7 @@ public abstract class MultipleRestfulConnector implements Connector {
         for (int i = 0; i < times; i++) {
             int batch = i;
             JobContext cloneCtx = SerializationUtils.clone(ctx);
+            cloneCtx.setExecuteMode(ExecuteMode.SYNC);
             ListenableFuture<Boolean> future = executorService.submit(() -> {
                 DownloadData data = this.firstFetch(cloneCtx, batch);
                 cloneCtx.setBatch(String.valueOf(batch));

@@ -63,6 +63,9 @@ public abstract class AbstractRecordHandler implements RecordHandler {
                 return Boolean.TRUE;
             }));
             totalCount++;
+            if (totalCount % 100 == 0) {
+                log.warn("total count {}", totalCount);
+            }
         }
         if (isJobComplete) {
             int successCount = -1;

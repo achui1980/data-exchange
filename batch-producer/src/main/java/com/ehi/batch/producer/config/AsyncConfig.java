@@ -2,11 +2,13 @@ package com.ehi.batch.producer.config;
 
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.DeadEvent;
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.util.concurrent.Executors;
 
@@ -18,12 +20,13 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class AsyncConfig {
     private static final Integer EVENT_BUS_THREAD_POOL_SIZE = 20;
+    private static final Integer COMMON_THREAD_POOL_SIZE = 100;
 
-    @Bean
+    @Bean("asyncEventBus")
     public AsyncEventBus asyncEventBus() {
-        AsyncEventBus asyncEventBus = new AsyncEventBus(Executors.newFixedThreadPool(EVENT_BUS_THREAD_POOL_SIZE),
+        AsyncEventBus asyncEventBus = new AsyncEventBus(eventBusThreadPool(),
                 (exception, ctx) -> {
-                    log.error("execute task error: ", exception);
+                    log.error("async execute task error: ", exception);
                 });
         //register dead event.
         asyncEventBus.register(new Object() {
@@ -33,5 +36,22 @@ public class AsyncConfig {
             }
         });
         return asyncEventBus;
+    }
+
+    @Bean("eventBus")
+    public EventBus eventBus() {
+        return new EventBus((exception, ctx) -> {
+            log.error("execute task error: ", exception);
+        });
+    }
+
+    private ListeningExecutorService eventBusThreadPool() {
+        return MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(EVENT_BUS_THREAD_POOL_SIZE));
+    }
+
+
+    @Bean
+    public ListeningExecutorService commonThreadPool() {
+        return MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(COMMON_THREAD_POOL_SIZE));
     }
 }

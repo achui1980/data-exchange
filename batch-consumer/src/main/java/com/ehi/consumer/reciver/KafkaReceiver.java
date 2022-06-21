@@ -34,6 +34,7 @@ public class KafkaReceiver {
     Gson gson;
     private Cache<String, Props> cache;
 
+
     @PostConstruct
     public void register() {
         gson = new GsonBuilder().create();

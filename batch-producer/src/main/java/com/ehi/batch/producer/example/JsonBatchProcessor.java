@@ -11,6 +11,7 @@ import com.ehi.batch.producer.kafka.KafkaSender;
 import com.ehi.batch.producer.listener.DummyJobListener;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.jeasy.batch.core.reader.RecordReader;
 import org.jeasy.batch.core.record.Record;
@@ -37,6 +38,10 @@ public class JsonBatchProcessor extends AbstractBatchProcessor<String, String> {
 
     @Value("${spring.kafka.topic}")
     private String topic;
+
+
+    @Autowired
+    private ListeningExecutorService kafkaSenderThreadPool;
 
     private RecordReader<String> getReaderBean(JobContext ctx) {
         Path datasource = null;

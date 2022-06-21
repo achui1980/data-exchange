@@ -1,6 +1,7 @@
 package com.ehi.batch.producer.core.context;
 
 import cn.hutool.setting.dialect.Props;
+import com.ehi.batch.ExecuteMode;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
@@ -17,4 +18,5 @@ public class Context implements Serializable {
     private String requestToken;
     private Props actionProps;
     private String batch;
+    private ExecuteMode executeMode = ExecuteMode.ASYNC;
 }

@@ -29,7 +29,7 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
         JobReport report = jobExecutor.execute(job);
         jobExecutor.shutdown();
         // Print the job execution report
-        System.out.println(report);
+        log.info(report.toString());
         return report;
     }
 
