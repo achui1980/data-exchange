@@ -36,7 +36,7 @@ public class KafkaReceiver {
     @Value("${application.data.resources}")
     private String resourceFolder;
 
-    Gson gson;
+    private Gson gson;
     private Cache<String, Props> cache;
 
 
