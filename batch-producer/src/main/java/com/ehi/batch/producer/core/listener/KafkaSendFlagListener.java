@@ -1,7 +1,7 @@
 package com.ehi.batch.producer.core.listener;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.exception.BatchJobException;
-import com.ehi.batch.producer.core.ApplicationContextProvider;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.kafka.KafkaSender;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * @date 06/15/2022 17:24
  */
 @Component
-public class KafkaSendFlagListener implements OperationListener{
+public class KafkaSendFlagListener implements OperationListener {
     @Autowired
     private KafkaSender kafkaSender;
 
@@ -22,11 +22,11 @@ public class KafkaSendFlagListener implements OperationListener{
 
     @Override
     public void beforeOperation(JobContext ctx) throws BatchJobException {
-        kafkaSender.sendKafkaJobFlag(topic, "Batch Start", ctx, true, false);
+        kafkaSender.sendKafkaJobFlag(topic, "Batch Start", ctx, JobStatus.START);
     }
 
     @Override
     public void afterOperation(JobContext ctx) throws BatchJobException {
-        kafkaSender.sendKafkaJobFlag(topic, "Batch Complete", ctx, false, true);
+        kafkaSender.sendKafkaJobFlag(topic, "Batch Complete", ctx, JobStatus.COMPLETED);
     }
 }

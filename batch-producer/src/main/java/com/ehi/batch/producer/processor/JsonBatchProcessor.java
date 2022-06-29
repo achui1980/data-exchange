@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.processor;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.model.MessageHeader;
@@ -63,6 +64,8 @@ public class JsonBatchProcessor extends AbstractBatchProcessor<String, String> {
                         .rowNumber(record.getHeader().getNumber())
                         .objectModel(ctx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
                         .requestToken(ctx.getRequestToken())
+                        .jobStatus(JobStatus.PROCESSING)
+                        .timestamp(System.currentTimeMillis())
                         .build();
                 header.put("X-Batch-Meta-Json", messageHeader.toString());
                 headers.add(header);

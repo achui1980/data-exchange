@@ -1,5 +1,6 @@
 package com.ehi.batch.model;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.exception.BatchJobException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -20,14 +21,14 @@ public class MessageHeader {
     private Long rowNumber;
     private String objectModel;
     private String requestToken;
-    private boolean jobComplete;
-    private boolean jobStart;
+    private Long timestamp = System.currentTimeMillis();
+    private JobStatus jobStatus = JobStatus.PROCESSING;
 
     @Override
     public String toString() {
         ObjectMapper objectMapper = new ObjectMapper();
-        try{
-           return objectMapper.writeValueAsString(this);
+        try {
+            return objectMapper.writeValueAsString(this);
         } catch (Exception e) {
             throw new BatchJobException("covert to json error");
         }

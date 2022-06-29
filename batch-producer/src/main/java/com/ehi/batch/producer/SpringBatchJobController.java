@@ -1,6 +1,8 @@
 package com.ehi.batch.producer;
 
 import cn.hutool.core.lang.UUID;
+import cn.hutool.db.Db;
+import cn.hutool.db.Entity;
 import cn.hutool.setting.dialect.Props;
 import com.ehi.batch.producer.core.context.FetchContext;
 import com.ehi.batch.producer.listener.FetchFileEventListener;
@@ -15,6 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.List;
 
 /**
  * @author portz

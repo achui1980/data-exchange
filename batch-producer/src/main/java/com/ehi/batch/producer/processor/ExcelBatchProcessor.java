@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.processor;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
@@ -44,7 +45,7 @@ public class ExcelBatchProcessor extends AbstractBatchProcessor<String, String> 
         return batch -> {
             List<Map<String, String>> headers = Lists.newArrayList();
             for (Record<String> record : batch) {
-                sender.sendKafkaJobFlag(topic, record.getPayload(), ctx, false, false);
+                sender.sendKafkaJobFlag(topic, record.getPayload(), ctx, JobStatus.PROCESSING);
             }
         };
     }

@@ -38,7 +38,6 @@
   - [x] Excel
   - [x] Json
   - [x] Memory
-  - [ ] XML
 - 写入kafka
 
   - [x] Spring Kafa integration

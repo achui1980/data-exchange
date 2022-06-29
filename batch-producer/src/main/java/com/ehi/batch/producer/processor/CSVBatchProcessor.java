@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.processor;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.JobConfiguration;
@@ -51,7 +52,7 @@ public class CSVBatchProcessor extends AbstractBatchProcessor<String, String> {
             List<Map<String, String>> headers = Lists.newArrayList();
             for (Record<String> record : batch) {
                 String json = gson.toJson(record.getPayload());
-                sender.sendKafkaJobFlag(topic, json, ctx, false, false);
+                sender.sendKafkaJobFlag(topic, json, ctx, JobStatus.PROCESSING);
             }
         };
     }

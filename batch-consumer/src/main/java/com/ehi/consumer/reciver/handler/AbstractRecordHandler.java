@@ -1,5 +1,6 @@
 package com.ehi.consumer.reciver.handler;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.model.BatchJobMetric;
 import com.ehi.batch.model.BatchJobReport;
@@ -42,8 +43,7 @@ public abstract class AbstractRecordHandler implements RecordHandler {
     @Override
     public BatchJobReport processRecord(ConsumerJobContext ctx) throws BatchJobException {
         String actionId = ctx.getMessageMeta().getActionId();
-        boolean isJobComplete = ctx.getMessageMeta().isJobComplete();
-        boolean isJobStart = ctx.getMessageMeta().isJobStart();
+        JobStatus jobStatus = ctx.getMessageMeta().getJobStatus();
         ListeningExecutorService executorService;
         List<ListenableFuture<Boolean>> executeResultList;
         try {
@@ -53,19 +53,19 @@ public abstract class AbstractRecordHandler implements RecordHandler {
             throw new BatchJobException("create cache error", ex);
         }
 
-        if (isJobStart) {
+        if (JobStatus.START == jobStatus) {
             sw = Stopwatch.createUnstarted();
             sw.start();
 
         }
-        if (!(isJobStart || isJobComplete)) {
+        if (JobStatus.PROCESSING == jobStatus) {
             executeResultList.add(executorService.submit(() -> {
                 handleEachRecord(ctx);
                 return Boolean.TRUE;
             }));
             totalCount++;
         }
-        if (isJobComplete) {
+        if (JobStatus.COMPLETED == jobStatus) {
             int successCount = -1;
             try {
                 successCount = completeJob(executeResultList, executorService, ctx);

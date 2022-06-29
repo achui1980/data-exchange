@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.listener;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.model.MessageHeader;
 import com.ehi.batch.producer.core.context.JobContext;
@@ -36,11 +37,11 @@ public class BatchJobListener implements JobListener {
 
     @Override
     public void beforeJob(JobParameters jobParameters) {
-        sender.sendKafkaJobFlag(topic, "Batch Start", jobCtx, true, false);
+        sender.sendKafkaJobFlag(topic, "Batch Start", jobCtx, JobStatus.START);
     }
 
     @Override
     public void afterJob(JobReport jobReport) {
-        sender.sendKafkaJobFlag(topic, "Batch Complete", jobCtx, false, true);
+        sender.sendKafkaJobFlag(topic, "Batch Complete", jobCtx, JobStatus.COMPLETED);
     }
 }

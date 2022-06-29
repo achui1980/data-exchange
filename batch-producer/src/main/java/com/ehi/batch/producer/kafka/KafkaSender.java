@@ -1,5 +1,6 @@
 package com.ehi.batch.producer.kafka;
 
+import com.ehi.batch.JobStatus;
 import com.ehi.batch.PropertyConstant;
 import com.ehi.batch.model.MessageHeader;
 import com.ehi.batch.producer.core.context.JobContext;
@@ -45,14 +46,14 @@ public class KafkaSender {
         kafkaTemplate.send(record);
     }
 
-    public void sendKafkaJobFlag(String topic, String msg, JobContext jobCtx,boolean startFlag, boolean completeFlag) {
+    public void sendKafkaJobFlag(String topic, String msg, JobContext jobCtx, JobStatus jobStatus) {
         List<Map<String, String>> headers = Lists.newArrayList();
         MessageHeader messageHeader = MessageHeader.builder()
                 .actionId(jobCtx.getActionId())
                 .objectModel(jobCtx.getActionProps().getStr(PropertyConstant.BATCH_RECORD_OBJECT_MODEL))
                 .requestToken(jobCtx.getRequestToken())
-                .jobComplete(completeFlag)
-                .jobStart(startFlag)
+                .timestamp(System.currentTimeMillis())
+                .jobStatus(jobStatus)
                 .build();
         Map<String, String> header = Maps.newHashMap();
         header.put("X-Batch-Meta-Json", messageHeader.toString());
