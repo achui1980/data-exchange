@@ -19,6 +19,8 @@ import org.jeasy.batch.core.record.Record;
 import org.jeasy.batch.core.writer.RecordWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
@@ -31,6 +33,7 @@ import java.util.Map;
  * @date 06/10/2022 14:37
  */
 @Component("JsonBatchProcessor")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public class JsonBatchProcessor extends AbstractBatchProcessor<String, String> {
     public static final String ACTION_ID = "JsonBatchProcessor";

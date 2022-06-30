@@ -5,6 +5,8 @@ import com.ehi.batch.producer.core.connector.DownloadData;
 import com.ehi.batch.producer.core.context.JobContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
  * @date 05/10/2022 14:21
  */
 @Component("SftpConnector")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public class SftpConnector implements Connector {
     @Autowired

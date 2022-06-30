@@ -4,30 +4,44 @@ import com.ehi.batch.exception.BatchJobException;
 import com.ehi.batch.producer.core.JobConfiguration;
 import com.ehi.batch.producer.core.context.JobContext;
 import com.ehi.batch.producer.listener.BatchJobListener;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.jeasy.batch.core.job.Job;
 import org.jeasy.batch.core.job.JobBuilder;
 import org.jeasy.batch.core.job.JobExecutor;
 import org.jeasy.batch.core.job.JobReport;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+
+import java.util.List;
 
 /**
  * @author portz
  * @date 05/16/2022 20:52
  */
 @Slf4j
-public abstract class AbstractBatchProcessor<I, O> implements Processor {
+public abstract class AbstractBatchProcessor<I, O> implements Processor, DisposableBean {
+    public static final String KEY_PREFIX = "producer-";
     @Autowired
     BatchJobListener batchJobListener;
 
+    @Autowired
+    RedisTemplate<String, String> redisTemplate;
+
+    private List<JobContext> jobCtxList = Lists.newCopyOnWriteArrayList();
+
     @Override
     public JobReport processJob(JobContext ctx) throws BatchJobException {
-
+        jobCtxList.add(ctx);
         JobBuilder<I, O> jobBuilder = configJobBuilder(ctx);
         Job job = jobBuilder.build();
         JobExecutor jobExecutor = new JobExecutor(1);
         JobReport report = jobExecutor.execute(job);
         jobExecutor.shutdown();
+        jobCtxList.remove(ctx);
         // Print the job execution report
         log.info(report.toString());
         return report;
@@ -91,5 +105,14 @@ public abstract class AbstractBatchProcessor<I, O> implements Processor {
             jobBuilder.readerListener(jobConfiguration.getRecordReaderListener());
         }
         return jobBuilder;
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        Gson gson = new GsonBuilder().create();
+        for (JobContext ctx : jobCtxList) {
+            String key = BatchJobListener.KEY_PREFIX + ctx.getRequestToken();
+            redisTemplate.opsForValue().set(key, gson.toJson(ctx));
+        }
     }
 }

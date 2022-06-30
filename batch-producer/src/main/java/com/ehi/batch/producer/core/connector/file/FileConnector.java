@@ -1,13 +1,14 @@
 package com.ehi.batch.producer.core.connector.file;
 
-import com.ehi.batch.producer.core.connector.DownloadData;
-import com.ehi.batch.producer.core.listener.OperationListener;
 import com.ehi.batch.producer.core.connector.Connector;
-import com.ehi.batch.producer.core.listener.DefaultOperationListener;
 import com.ehi.batch.producer.core.context.JobContext;
+import com.ehi.batch.producer.core.listener.DefaultOperationListener;
+import com.ehi.batch.producer.core.listener.OperationListener;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
  * @date 06/09/2022 16:33
  */
 @Component("FileConnector")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public class FileConnector implements Connector {
     private final List<OperationListener> listeners = Lists.newArrayList(new DefaultOperationListener());

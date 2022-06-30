@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SerializationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -34,6 +36,7 @@ import java.util.concurrent.Executors;
  * @date 06/10/2022 11:57
  */
 @Component("RestfulConnector")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public abstract class MultipleRestfulConnector implements Connector {
     @Autowired

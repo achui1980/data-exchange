@@ -16,6 +16,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ import static java.text.MessageFormat.format;
  */
 @Slf4j
 @Service
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SftpTemplate {
 
     @Setter

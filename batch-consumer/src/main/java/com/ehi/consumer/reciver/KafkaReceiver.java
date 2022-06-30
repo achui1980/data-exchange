@@ -39,6 +39,8 @@ import java.util.Optional;
 @Slf4j
 public class KafkaReceiver implements DisposableBean {
 
+    private static final String KEY_PREFIX = "consumer-";
+
     @Autowired
     ApplicationContext appCtx;
 
@@ -69,10 +71,13 @@ public class KafkaReceiver implements DisposableBean {
             Object message = kafkaMessage.get();
             try {
                 MessageHeader messageMeta = gson.fromJson(metaJson, MessageHeader.class);
+                JobStatus jobStatus = messageMeta.getJobStatus();
                 if (ignoreMessageIfNeeded(messageMeta)) {
+                    if (JobStatus.COMPLETED == jobStatus) {
+                        actionIdCache.invalidate(messageMeta.getActionId());
+                    }
                     return;
                 }
-                JobStatus jobStatus = messageMeta.getJobStatus();
                 URL url = this.getClass().getResource("/demo/" + messageMeta.getActionId() + ".properties");
                 if (StringUtils.isNotEmpty(resourceFolder)) {
                     url = new URL("file://" + resourceFolder + "/" + messageMeta.getActionId() + ".properties");
@@ -90,8 +95,8 @@ public class KafkaReceiver implements DisposableBean {
                 BatchJobReport report = handler.processRecord(ctx);
                 if (JobStatus.COMPLETED == jobStatus) {
                     log.info("=======report======= {}", report);
-                    actionIdCache.invalidate(messageMeta.getActionId());
                 }
+                actionIdCache.invalidate(messageMeta.getActionId());
             } catch (Exception e) {
                 log.error("error while covert to class", e);
             }
@@ -100,7 +105,8 @@ public class KafkaReceiver implements DisposableBean {
     }
 
     private boolean ignoreMessageIfNeeded(MessageHeader messageHeader) {
-        String exceptionTimeStr = redisTemplate.opsForValue().get(messageHeader.getRequestToken());
+        String key = KEY_PREFIX + messageHeader.getRequestToken();
+        String exceptionTimeStr = redisTemplate.opsForValue().get(key);
         if (StringUtils.isEmpty(exceptionTimeStr)) {
             return false;
         }
@@ -115,11 +121,11 @@ public class KafkaReceiver implements DisposableBean {
         log.info("---------handle shutdown exception--------");
         for (Map.Entry<String, MessageHeader> entry : map.entrySet()) {
             MessageHeader messageHeader = entry.getValue();
-            String requestToken = messageHeader.getRequestToken();
+            String key = KEY_PREFIX + messageHeader.getRequestToken();
             //记录异常发生的时间
-            redisTemplate.opsForValue().set(requestToken, String.valueOf(messageHeader.getTimestamp()));
+            redisTemplate.opsForValue().set(key, String.valueOf(messageHeader.getTimestamp()));
             //每天0点失效
-            redisTemplate.expire(requestToken, duration);
+            redisTemplate.expire(key, duration);
         }
     }
 
